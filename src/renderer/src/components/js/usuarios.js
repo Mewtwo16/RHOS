@@ -14,7 +14,6 @@
       const placeholder = select.querySelector('option[value=""]')
       select.innerHTML = ''
       if (placeholder) select.appendChild(placeholder)
-
       ;(res.data || []).forEach((role) => {
         const opt = document.createElement('option')
         opt.value = role.role_name

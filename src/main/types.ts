@@ -14,6 +14,13 @@ export interface LoginResponse {
   token?: string
 }
 
+export interface AuthUser {
+  id: number
+  usuario: string
+  cargo: string[]
+  permissoes: string[]
+}
+
 export interface User {
   id: number
   full_name: string
@@ -65,14 +72,8 @@ export interface IElectronAPI {
   addUser: (dadosUsuario: addUser) => Promise<AnyResponse>
   addRole: (dadosCargo: addRole) => Promise<AnyResponse>
   getAllRoles: () => Promise<Role[] | AnyResponse>
-  searchUsers: (filters?: {
-    field?: string
-    value?: string
-  }) => Promise<User[] | AnyResponse>
-  searchRoles: (filters?: {
-    field?: string
-    value?: string
-  }) => Promise<Role[] | AnyResponse>
+  searchUsers: (filters?: { field?: string; value?: string }) => Promise<User[] | AnyResponse>
+  searchRoles: (filters?: { field?: string; value?: string }) => Promise<Role[] | AnyResponse>
   logAction: (entry: any) => Promise<AnyResponse>
   getLogs: (limit?: number) => Promise<AnyResponse>
   getAllowed: () => Promise<AllowedResponse>

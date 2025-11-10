@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
 import userService from '../services/userService'
 
-
 /**
  * Cria um novo usuário e vincula o cargo informado.
  * Body: { full_name, email, user, password, cpf, birth_date, role, status }
@@ -9,10 +8,10 @@ import userService from '../services/userService'
  */
 export async function addUserRoute(req: Request, res: Response) {
   try {
-    const userData = req.body;
-    const userResponse = await userService.addUser(userData);
+    const userData = req.body
+    const userResponse = await userService.addUser(userData)
 
-    if(userResponse.success){
+    if (userResponse.success) {
       res.json({
         success: true,
         message: `Sucesso na criação do usuario!`
@@ -33,12 +32,19 @@ export async function getUserRoute(req: Request, res: Response) {
   try {
     const { id, full_name, email, login, cpf, role } = req.query
 
-    const provided = [id, full_name, email, login, cpf, role].filter(v => v !== undefined)
+    const provided = [id, full_name, email, login, cpf, role].filter((v) => v !== undefined)
     if (provided.length === 0) {
-      return res.status(400).json({ success: false, message: 'Informe um parâmetro de busca: id, full_name, email, login, cpf ou role.' })
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: 'Informe um parâmetro de busca: id, full_name, email, login, cpf ou role.'
+        })
     }
     if (provided.length > 1) {
-      return res.status(400).json({ success: false, message: 'Informe apenas um parâmetro de busca por requisição.' })
+      return res
+        .status(400)
+        .json({ success: false, message: 'Informe apenas um parâmetro de busca por requisição.' })
     }
 
     const opts: any = {}
@@ -49,7 +55,7 @@ export async function getUserRoute(req: Request, res: Response) {
     else if (typeof cpf === 'string') opts.cpf = cpf
     else if (typeof role === 'string') opts.role = role
 
-    const user = await userService.searchUser(opts)
+    const user = await userService.showUser(opts)
     if (!user) return res.status(404).json({ success: false, message: 'Usuário não encontrado.' })
     res.json({ success: true, data: user })
   } catch (error: any) {

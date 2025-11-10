@@ -19,7 +19,9 @@ export async function getLogsRoute(req: Request, res: Response) {
     if (resultado.success) {
       return res.json({ success: true, data: resultado.data })
     }
-    return res.status(500).json({ success: false, message: resultado.error || 'Falha ao listar logs.' })
+    return res
+      .status(500)
+      .json({ success: false, message: resultado.error || 'Falha ao listar logs.' })
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message || error })
   }

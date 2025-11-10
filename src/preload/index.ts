@@ -4,15 +4,15 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const API_BASE = `http://localhost:${process.env.EXPRESS_PORT || 3000}`
 const api = {
-  async submitLogin(user: string, password: string){
+  async submitLogin(user: string, password: string) {
     const res = await fetch(`${API_BASE}/api/login`, {
       method: 'POST',
-      headers: {'content-Type': 'application/json'},
-      body: JSON.stringify({user, password})
+      headers: { 'content-Type': 'application/json' },
+      body: JSON.stringify({ user, password })
     })
-    const data = await res.json().catch(() => ({}));
-    if(!res.ok) return {success: false, message: data?.message || `HTTP ${res.status}`};
-    return data;
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { success: false, message: data?.message || `HTTP ${res.status}` }
+    return data
   }
 }
 

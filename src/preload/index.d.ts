@@ -6,7 +6,6 @@ declare global {
     electron: ElectronAPI
     api: {
       submitLogin(user: string, password: string): Promise<LoginResponse>
-
     }
   }
 }

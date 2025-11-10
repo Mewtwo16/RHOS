@@ -8,10 +8,7 @@ const permissionPattern = /^[a-z0-9._-]+:[a-z0-9._-]+$/
 export const addRoleSchema = Joi.object({
   role_name: Joi.string().min(3).max(100).required(),
   description: Joi.string().allow(null, '').max(255),
-  permissions: Joi.array()
-    .items(Joi.string().pattern(permissionPattern))
-    .max(200)
-    .default([])
+  permissions: Joi.array().items(Joi.string().pattern(permissionPattern)).max(200).default([])
 })
 
 // Middleware de validação para cargo
@@ -25,7 +22,9 @@ export function roleIsValid(schema: Joi.ObjectSchema) {
       })
     }
     if (Array.isArray(value.permissions)) {
-      const unique = Array.from(new Set(value.permissions.map((p: string) => p.trim()))).filter(Boolean)
+      const unique = Array.from(new Set(value.permissions.map((p: string) => p.trim()))).filter(
+        Boolean
+      )
       value.permissions = unique
     }
     req.body = value

@@ -1,15 +1,14 @@
 import express from 'express'
 const route = express.Router()
 
-import {loginSchema, loginIsValid} from './middlewares/loginValidate';
-import  {addUserSchema, userIsValid} from './middlewares/addUserValidate';
+import { loginSchema, loginIsValid } from './middlewares/loginValidate'
+import { addUserSchema, userIsValid } from './middlewares/addUserValidate'
 import { addRoleSchema, roleIsValid } from './middlewares/addRoleValidate'
 
-
 import { loginRoute } from './routes/authRoute'
-import { addUserRoute, getUserRoute } from './routes/userRoute';
+import { addUserRoute, getUserRoute } from './routes/userRoute'
 import { healthRoute } from './routes/healthRoute'
-import { addRoleRoute, getRoleRoute} from './routes/roleRoute'
+import { addRoleRoute, getRoleRoute } from './routes/roleRoute'
 import { getAllowedRoute } from './routes/allowedRoute'
 import { getLogsRoute } from './routes/logRoute'
 
@@ -30,7 +29,5 @@ route.get('/api/allowed', getAllowedRoute)
 
 // Auditoria
 route.get('/api/logs', getLogsRoute)
-
-
 
 export default route

@@ -1,8 +1,6 @@
 import '../assets/css/logs.css'
 import { useState } from 'react'
 
-
-
 export function ActionLogs() {
   return (
     <>

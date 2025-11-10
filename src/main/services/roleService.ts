@@ -35,7 +35,9 @@ class RoleService {
             } else {
               allowedId = existing.id
             }
-            const rel = await trx('roles_allowed').where({ roles_id: roleId, allowed_id: allowedId }).first()
+            const rel = await trx('roles_allowed')
+              .where({ roles_id: roleId, allowed_id: allowedId })
+              .first()
             if (!rel) {
               await trx('roles_allowed').insert({ roles_id: roleId, allowed_id: allowedId })
             }
@@ -56,7 +58,7 @@ class RoleService {
       })
       return {
         success: true,
-        message: `Sucesso no cadastro de cargo com ${result.assigned.length} permissões`,
+        message: `Sucesso no cadastro de cargo com ${result.assigned.length} permissões`
       }
     } catch (error) {
       return {
@@ -67,44 +69,53 @@ class RoleService {
   }
 
   // Busca um cargo único e agrega suas permissões
-  async searchRoles(options?: { id?: number; role_name?: string; description?: string }){
+  async searchRoles(options?: { id?: number; role_name?: string; description?: string }) {
     try {
       if (!options) {
         return { success: false, message: 'Nenhum parâmetro de busca fornecido.' }
       }
 
       if (typeof options.id === 'number') {
-        const role = await db<Role>('roles as r').select('r.id','r.role_name','r.description').where('r.id', options.id).first()
+        const role = await db<Role>('roles as r')
+          .select('r.id', 'r.role_name', 'r.description')
+          .where('r.id', options.id)
+          .first()
         if (!role) return { success: true, data: null }
-        const permissions = await db('allowed as a')
+        const permissions = (await db('allowed as a')
           .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
           .where('ra.roles_id', role.id)
           .distinct('a.permission_name')
-          .pluck('permission_name') as string[]
+          .pluck('permission_name')) as string[]
         return { success: true, data: { ...role, permissions } }
       }
 
       if (typeof options.role_name === 'string' && options.role_name.length > 0) {
         const val = `%${options.role_name}%`
-        const role = await db<Role>('roles as r').select('r.id','r.role_name','r.description').where('r.role_name', 'like', val).first()
+        const role = await db<Role>('roles as r')
+          .select('r.id', 'r.role_name', 'r.description')
+          .where('r.role_name', 'like', val)
+          .first()
         if (!role) return { success: true, data: null }
-        const permissions = await db('allowed as a')
+        const permissions = (await db('allowed as a')
           .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
           .where('ra.roles_id', role.id)
           .distinct('a.permission_name')
-          .pluck('permission_name') as string[]
+          .pluck('permission_name')) as string[]
         return { success: true, data: { ...role, permissions } }
       }
 
       if (typeof options.description === 'string' && options.description.length > 0) {
         const val = `%${options.description}%`
-        const role = await db<Role>('roles as r').select('r.id','r.role_name','r.description').where('r.description', 'like', val).first()
+        const role = await db<Role>('roles as r')
+          .select('r.id', 'r.role_name', 'r.description')
+          .where('r.description', 'like', val)
+          .first()
         if (!role) return { success: true, data: null }
-        const permissions = await db('allowed as a')
+        const permissions = (await db('allowed as a')
           .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
           .where('ra.roles_id', role.id)
           .distinct('a.permission_name')
-          .pluck('permission_name') as string[]
+          .pluck('permission_name')) as string[]
         return { success: true, data: { ...role, permissions } }
       }
 

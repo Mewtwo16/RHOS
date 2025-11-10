@@ -29,15 +29,15 @@ class AuthService {
     }
   }
 
-  // Agrega permissões via junções N:N (roles_allowed + role_users)
+  // Agrega permissões via junções 
   private async getUserPermissions(userId: number): Promise<string[]> {
     try {
-      const permissions = await db('allowed')
+      const permissions = (await db('allowed')
         .join('roles_allowed', 'allowed.id', '=', 'roles_allowed.allowed_id')
         .join('role_users', 'roles_allowed.roles_id', '=', 'role_users.roles_id')
         .where('role_users.users_id', userId)
         .distinct('allowed.permission_name')
-        .pluck('permission_name') as string[]
+        .pluck('permission_name')) as string[]
       return permissions
     } catch {
       return []
@@ -47,11 +47,11 @@ class AuthService {
   // Lista cargos associados ao usuário
   private async getUserRoles(userId: number): Promise<string[]> {
     try {
-      const roles = await db('roles')
+      const roles = (await db('roles')
         .join('role_users', 'roles.id', '=', 'role_users.roles_id')
         .where('role_users.users_id', userId)
         .distinct('roles.role_name')
-        .pluck('role_name') as string[]
+        .pluck('role_name')) as string[]
       return roles
     } catch {
       return []

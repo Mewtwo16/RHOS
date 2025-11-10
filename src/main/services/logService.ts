@@ -67,7 +67,7 @@ class LogsService {
         Array.isArray(rows) ? rows.length : 'not-array',
         rows && rows[0]
       )
-  return { success: true, data: normalized }
+      return { success: true, data: normalized }
     } catch (err) {
       console.error('Erro ao listar logs:', err)
       return { success: false, error: String(err) }
