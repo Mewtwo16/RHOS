@@ -1,10 +1,6 @@
 import authService from '../services/authService'
 import { Request, Response } from 'express'
 
-/**
- * Autentica e retorna JWT contendo cargos e permissões do usuário.
- * Body: { usuario, senha }
- */
 export async function loginRoute(req: Request, res: Response) {
   try {
     const { usuario, senha } = req.body

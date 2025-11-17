@@ -1,15 +1,13 @@
-import { Request, Response } from 'express'
+import { Response } from 'express'
+import { AuthRequest } from '../types'
 import userService from '../services/userService'
 
-/**
- * Cria um novo usuário e vincula o cargo informado.
- * Body: { full_name, email, user, password, cpf, birth_date, role, status }
- * Respostas: 200 sucesso | 400 validação/negócio | 500 erro interno
- */
-export async function addUserRoute(req: Request, res: Response) {
+export async function addUserRoute(req: AuthRequest, res: Response) {
   try {
     const userData = req.body
-    const userResponse = await userService.addUser(userData)
+    const loggedUser = req.user
+    
+    const userResponse = await userService.addUser(userData, loggedUser)
 
     if (userResponse.success) {
       res.json({
@@ -24,27 +22,24 @@ export async function addUserRoute(req: Request, res: Response) {
   }
 }
 
-/**
- * Consulta um usuário por um único critério (id, full_name, email, login, cpf ou role).
- * Query: ?id= | ?full_name= | ?email= | ?login= | ?cpf= | ?role=
- */
-export async function getUserRoute(req: Request, res: Response) {
+export async function getUserRoute(req: AuthRequest, res: Response) {
   try {
     const { id, full_name, email, login, cpf, role } = req.query
 
     const provided = [id, full_name, email, login, cpf, role].filter((v) => v !== undefined)
+    
     if (provided.length === 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Informe um parâmetro de busca: id, full_name, email, login, cpf ou role.'
-        })
+      return res.status(400).json({
+        success: false,
+        message: 'Informe um parâmetro de busca: id, full_name, email, login, cpf ou role.'
+      })
     }
+    
     if (provided.length > 1) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Informe apenas um parâmetro de busca por requisição.' })
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Informe apenas um parâmetro de busca por requisição.' 
+      })
     }
 
     const opts: any = {}
@@ -57,7 +52,42 @@ export async function getUserRoute(req: Request, res: Response) {
 
     const user = await userService.showUser(opts)
     if (!user) return res.status(404).json({ success: false, message: 'Usuário não encontrado.' })
+    
     res.json({ success: true, data: user })
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error?.message || error })
+  }
+}
+
+export async function listUsersRoute(req: AuthRequest, res: Response) {
+  try {
+    const users = await userService.listAllUsers()
+    res.json({ success: true, data: users })
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error?.message || error })
+  }
+}
+
+export async function updateUserRoute(req: AuthRequest, res: Response) {
+  try {
+    const userId = parseInt(req.params.id, 10)
+    if (isNaN(userId)) {
+      return res.status(400).json({ success: false, message: 'ID inválido' })
+    }
+
+    const userData = req.body
+    const loggedUser = req.user
+    
+    const userResponse = await userService.updateUser(userId, userData, loggedUser)
+
+    if (userResponse.success) {
+      res.json({
+        success: true,
+        message: userResponse.message || 'Usuário atualizado com sucesso.'
+      })
+    } else {
+      res.status(400).json(userResponse)
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, message: error?.message || error })
   }

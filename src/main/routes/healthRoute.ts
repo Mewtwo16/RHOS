@@ -1,9 +1,6 @@
 import { Request, Response } from 'express'
 import health from '../services/healthService'
 
-/**
- * Healthcheck: verifica disponibilidade do banco.
- */
 export async function healthRoute(req: Request, res: Response) {
   try {
     const healthResponse = await health.tryDB()

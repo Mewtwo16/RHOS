@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express'
 import Joi from 'joi'
 import { cpf } from 'cpf-cnpj-validator'
 
-// Esquema de validação para criação de usuário
 const addUserSchema = Joi.object({
   full_name: Joi.string().min(3).max(100).required(),
   email: Joi.string().email().required(),
@@ -20,7 +19,6 @@ const addUserSchema = Joi.object({
   status: Joi.number().required()
 })
 
-// Middleware de validação de payload com Joi (usuário)
 function userIsValid(schema: Joi.ObjectSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error } = schema.validate(req.body)

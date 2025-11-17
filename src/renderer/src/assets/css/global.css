@@ -14,12 +14,17 @@
   /* Cores Neutras e de Fundo */
   --background-app: #f0f2f5; /* Fundo geral da aplicação */
   --background-card: #ffffff; /* Fundo de cards/containers */
+  --background-submenu: #ffffff; /* Fundo do submenu */
+  --background-login-gradient-start: #a8d5d8; /* Início do gradiente de login - mais claro */
+  --background-login-gradient-end: #d4ebec; /* Fim do gradiente de login - mais claro */
   --text-dark: #333333; /* Textos principais, títulos */
   --text-medium: #666666; /* Textos secundários, placeholders */
   --text-light: #ffffff; /* Texto sobre fundo escuro */
   --border-light: #e0e0e0; /* Bordas sutis, divisores */
   --shadow-soft: rgba(0, 0, 0, 0.08); /* Sombra suave para elementos */
   --hover-background: rgba(0, 0, 0, 0.05); /* Fundo para itens hover em menus/cards claros */
+  --hover-background-menu: rgba(42, 98, 106, 0.1); /* Hover no menu principal */
+  --hover-background-submenu: rgba(42, 98, 106, 0.05); /* Hover no submenu */
 
   /* Tipografia */
   --font-family-base: 'minhasFontes', sans-serif;

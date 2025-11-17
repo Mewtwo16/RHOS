@@ -4,30 +4,29 @@ const route = express.Router()
 import { loginSchema, loginIsValid } from './middlewares/loginValidate'
 import { addUserSchema, userIsValid } from './middlewares/addUserValidate'
 import { addRoleSchema, roleIsValid } from './middlewares/addRoleValidate'
+import { requirePermissions } from './middlewares/authorization'
 
 import { loginRoute } from './routes/authRoute'
-import { addUserRoute, getUserRoute } from './routes/userRoute'
+import { addUserRoute, getUserRoute, listUsersRoute, updateUserRoute } from './routes/userRoute'
 import { healthRoute } from './routes/healthRoute'
-import { addRoleRoute, getRoleRoute } from './routes/roleRoute'
+import { addRoleRoute, getRoleRoute, listRolesRoute, updateRoleRoute } from './routes/roleRoute'
 import { getAllowedRoute } from './routes/allowedRoute'
 import { getLogsRoute } from './routes/logRoute'
 
-// Rotas públicas
 route.get('/api/health', healthRoute)
-
-// Rota Login
 route.post('/api/login', loginIsValid(loginSchema), loginRoute)
 
-// Usuários
-route.post('/api/user', userIsValid(addUserSchema), addUserRoute)
-route.get('/api/user', getUserRoute)
+route.post('/api/user', requirePermissions('users:create'), userIsValid(addUserSchema), addUserRoute)
+route.put('/api/user/:id', requirePermissions('users:update'), updateUserRoute)
+route.get('/api/user', requirePermissions('users:read'), getUserRoute)
+route.get('/api/users', requirePermissions('users:read'), listUsersRoute)
 
-// Cargos / Permissões
-route.get('/api/role', getRoleRoute)
-route.post('/api/role', roleIsValid(addRoleSchema), addRoleRoute)
-route.get('/api/allowed', getAllowedRoute)
+route.post('/api/role', requirePermissions('roles:create'), roleIsValid(addRoleSchema), addRoleRoute)
+route.put('/api/role/:id', requirePermissions('roles:update'), updateRoleRoute)
+route.get('/api/role', requirePermissions('roles:read'), getRoleRoute)
+route.get('/api/roles', requirePermissions('roles:read'), listRolesRoute)
+route.get('/api/allowed', requirePermissions('roles:read'), getAllowedRoute)
 
-// Auditoria
-route.get('/api/logs', getLogsRoute)
+route.get('/api/logs', requirePermissions('logs:read'), getLogsRoute)
 
 export default route

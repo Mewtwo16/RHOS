@@ -1,17 +1,14 @@
 import { Request, Response, NextFunction } from 'express'
 import Joi from 'joi'
 
-// Padrão permissões: recurso:acao (minúsculas, dígitos, ., -, _)
 const permissionPattern = /^[a-z0-9._-]+:[a-z0-9._-]+$/
 
-// Esquema de validação para criação de cargo + permissões
 export const addRoleSchema = Joi.object({
   role_name: Joi.string().min(3).max(100).required(),
   description: Joi.string().allow(null, '').max(255),
   permissions: Joi.array().items(Joi.string().pattern(permissionPattern)).max(200).default([])
 })
 
-// Middleware de validação para cargo
 export function roleIsValid(schema: Joi.ObjectSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.body, { abortEarly: false })

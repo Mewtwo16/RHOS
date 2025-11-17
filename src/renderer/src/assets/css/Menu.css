@@ -119,6 +119,13 @@ li.dropdown.menu-aberto .submenus {
   pointer-events: auto;
 }
 
+.dropdown:hover .submenus {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
 .submenus li a {
   color: var(--text-dark);
   padding: 10px 20px;
@@ -191,8 +198,8 @@ picture img:hover {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  padding: 8px 20px;
-  background: #f6f7f8;
+  padding: 0;
+  background: #fafbfc;
 }
 
 .logo-fundo {

@@ -1,20 +1,9 @@
 import logService from './logService'
 import db from '../db/db'
-import type { Role, addRole, AnyResponse } from '../types'
+import type { Role, addRole, AnyResponse, AuthUser } from '../types'
 
 class RoleService {
-  // Retorna todos os cargos (sem permissões agregadas)
-  async getAllRoles(): Promise<Role[] | AnyResponse> {
-    try {
-      const roles = await db<Role>('roles').select('*')
-      return roles
-    } catch (error) {
-      return { success: false, message: `Erro ao buscar cargos: ${error}` }
-    }
-  }
-
-  // Cria cargo e relaciona permissões (upsert + vínculo)
-  async addRole(roleData: addRole) {
+  async addRole(roleData: addRole, loggedUser?: AuthUser): Promise<AnyResponse> {
     try {
       const result = await db.transaction(async (trx) => {
         const [roleId] = await trx('roles').insert({
@@ -22,107 +11,172 @@ class RoleService {
           description: roleData.description || null
         })
 
-        const permissions = Array.isArray(roleData.permissions) ? roleData.permissions : []
+        const permissions = roleData.permissions || []
         const assigned: string[] = []
 
-        if (permissions.length > 0) {
-          for (const perm of permissions) {
-            const existing = await trx('allowed').where({ permission_name: perm }).first()
-            let allowedId: number
-            if (!existing) {
-              const [newId] = await trx('allowed').insert({ permission_name: perm })
-              allowedId = newId
-            } else {
-              allowedId = existing.id
-            }
-            const rel = await trx('roles_allowed')
-              .where({ roles_id: roleId, allowed_id: allowedId })
-              .first()
-            if (!rel) {
-              await trx('roles_allowed').insert({ roles_id: roleId, allowed_id: allowedId })
-            }
+        for (const perm of permissions) {
+          let allowed = await trx('allowed').where({ permission_name: perm }).first()
+          
+          if (!allowed) {
+            const [newId] = await trx('allowed').insert({ permission_name: perm })
+            allowed = { id: newId, permission_name: perm }
+          }
+
+          const exists = await trx('roles_allowed')
+            .where({ roles_id: roleId, allowed_id: allowed.id })
+            .first()
+
+          if (!exists) {
+            await trx('roles_allowed').insert({ 
+              roles_id: roleId, 
+              allowed_id: allowed.id 
+            })
             assigned.push(perm)
           }
         }
 
+        await logService.write({
+          user_id: loggedUser?.id || null,
+          who: loggedUser?.usuario || 'system',
+          where: 'roles',
+          what: `Criou cargo ${roleData.role_name} com ${assigned.length} permissões`
+        }, trx)
+
         return { roleId, assigned }
       })
 
-      await logService.writeLogs({
-        user_id: null,
-        username: null,
-        action: 'create',
-        resource: 'roles',
-        resource_id: result.roleId,
-        details: `Criado cargo ${roleData.role_name} com permissões: ${result.assigned.join(', ') || 'nenhuma'}`
-      })
       return {
         success: true,
-        message: `Sucesso no cadastro de cargo com ${result.assigned.length} permissões`
+        message: `Cargo criado com ${result.assigned.length} permissões`
       }
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: `[RoleService ERROR] Falha ao adicionar cargo! ${error}`
+        message: error.message || 'Erro ao criar cargo'
       }
     }
   }
 
-  // Busca um cargo único e agrega suas permissões
-  async searchRoles(options?: { id?: number; role_name?: string; description?: string }) {
+  async searchRoles(options: { 
+    id?: number
+    role_name?: string
+    description?: string 
+  }): Promise<AnyResponse> {
     try {
-      if (!options) {
-        return { success: false, message: 'Nenhum parâmetro de busca fornecido.' }
+      const query = db('roles as r')
+        .select('r.id', 'r.role_name', 'r.description')
+
+      if (options.id) {
+        query.where('r.id', options.id)
+      } else if (options.role_name) {
+        query.where('r.role_name', 'like', `%${options.role_name}%`)
+      } else if (options.description) {
+        query.where('r.description', 'like', `%${options.description}%`)
+      } else {
+        return { success: false, message: 'Parâmetro de busca inválido' }
       }
 
-      if (typeof options.id === 'number') {
-        const role = await db<Role>('roles as r')
-          .select('r.id', 'r.role_name', 'r.description')
-          .where('r.id', options.id)
-          .first()
-        if (!role) return { success: true, data: null }
-        const permissions = (await db('allowed as a')
-          .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
-          .where('ra.roles_id', role.id)
-          .distinct('a.permission_name')
-          .pluck('permission_name')) as string[]
-        return { success: true, data: { ...role, permissions } }
-      }
+      const role = await query.first()
+      if (!role) return { success: true, data: null }
 
-      if (typeof options.role_name === 'string' && options.role_name.length > 0) {
-        const val = `%${options.role_name}%`
-        const role = await db<Role>('roles as r')
-          .select('r.id', 'r.role_name', 'r.description')
-          .where('r.role_name', 'like', val)
-          .first()
-        if (!role) return { success: true, data: null }
-        const permissions = (await db('allowed as a')
-          .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
-          .where('ra.roles_id', role.id)
-          .distinct('a.permission_name')
-          .pluck('permission_name')) as string[]
-        return { success: true, data: { ...role, permissions } }
-      }
+      const permissions = await db('allowed as a')
+        .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
+        .where('ra.roles_id', role.id)
+        .distinct('a.permission_name')
+        .pluck('permission_name')
 
-      if (typeof options.description === 'string' && options.description.length > 0) {
-        const val = `%${options.description}%`
-        const role = await db<Role>('roles as r')
-          .select('r.id', 'r.role_name', 'r.description')
-          .where('r.description', 'like', val)
-          .first()
-        if (!role) return { success: true, data: null }
-        const permissions = (await db('allowed as a')
-          .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
-          .where('ra.roles_id', role.id)
-          .distinct('a.permission_name')
-          .pluck('permission_name')) as string[]
-        return { success: true, data: { ...role, permissions } }
+      return { 
+        success: true, 
+        data: { ...role, permissions } 
       }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || 'Erro ao buscar cargo'
+      }
+    }
+  }
 
-      return { success: false, message: 'Parâmetros inválidos para busca.' }
-    } catch (error) {
-      console.error('[RoleService.searchRoles] ', error)
-      return { success: false, message: `[RoleService ERROR] Falha ao buscar cargo: ${error}` }
+  async listAllRoles(): Promise<AnyResponse> {
+    try {
+      const roles = await db('roles')
+        .select('id', 'role_name', 'description')
+        .orderBy('role_name', 'asc')
+
+      const rolesWithPermissions = await Promise.all(
+        roles.map(async (role) => {
+          const permissions = await db('allowed as a')
+            .join('roles_allowed as ra', 'ra.allowed_id', 'a.id')
+            .where('ra.roles_id', role.id)
+            .distinct('a.permission_name')
+            .pluck('permission_name')
+          
+          return { ...role, permissions }
+        })
+      )
+
+      return { success: true, data: rolesWithPermissions }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || 'Erro ao listar cargos'
+      }
+    }
+  }
+
+  async updateRole(roleId: number, roleData: Partial<addRole>, loggedUser?: AuthUser): Promise<AnyResponse> {
+    try {
+      const result = await db.transaction(async (trx) => {
+        const existingRole = await trx('roles').where({ id: roleId }).first()
+        if (!existingRole) {
+          throw new Error('Cargo não encontrado')
+        }
+
+        if (roleData.description !== undefined) {
+          await trx('roles')
+            .where({ id: roleId })
+            .update({ description: roleData.description })
+        }
+
+        let assigned: string[] = []
+        if (roleData.permissions) {
+          await trx('roles_allowed').where({ roles_id: roleId }).delete()
+
+          for (const perm of roleData.permissions) {
+            let allowed = await trx('allowed').where({ permission_name: perm }).first()
+            
+            if (!allowed) {
+              const [newId] = await trx('allowed').insert({ permission_name: perm })
+              allowed = { id: newId, permission_name: perm }
+            }
+
+            await trx('roles_allowed').insert({ 
+              roles_id: roleId, 
+              allowed_id: allowed.id 
+            })
+            assigned.push(perm)
+          }
+        }
+
+        await logService.write({
+          user_id: loggedUser?.id || null,
+          who: loggedUser?.usuario || 'system',
+          where: 'roles',
+          what: `Atualizou cargo ${existingRole.role_name} com ${assigned.length} permissões`
+        }, trx)
+
+        return { assigned }
+      })
+
+      return {
+        success: true,
+        message: `Cargo atualizado com sucesso`
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || 'Erro ao atualizar cargo'
+      }
     }
   }
 }

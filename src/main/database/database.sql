@@ -93,20 +93,21 @@ CREATE TABLE IF NOT EXISTS `RHOS`.`roles_allowed` (
 -- -----------------------------------------------------
 -- Table `RHOS`.`audit_logs`
 -- -----------------------------------------------------
+-- Table `RHOS`.`audit_logs`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `RHOS`.`audit_logs` ( 
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `users_id` INT UNSIGNED NOT NULL,
-  `action` VARCHAR(100) NOT NULL,
-  `resource` VARCHAR(100) NULL,
-  `resource_id` INT NULL,
-  `details` JSON NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_id` INT UNSIGNED NULL,
+  `who` VARCHAR(255) NULL,
+  `where` VARCHAR(255) NOT NULL,
+  `when` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `what` TEXT NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_audit_logs_users_id_idx` (`users_id` ASC) VISIBLE,
+  INDEX `fk_audit_logs_user_id_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `fk_audit_logs_users`
-    FOREIGN KEY (`users_id`)
+    FOREIGN KEY (`user_id`)
     REFERENCES `RHOS`.`users` (`id`)
-    ON DELETE NO ACTION
+    ON DELETE SET NULL
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8;
 

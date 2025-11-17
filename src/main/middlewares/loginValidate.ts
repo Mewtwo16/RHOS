@@ -1,13 +1,11 @@
 import { Request, Response, NextFunction } from 'express'
 import Joi from 'joi'
 
-// Esquema de validação para login
 const loginSchema = Joi.object({
   usuario: Joi.string().required(),
   senha: Joi.string().required()
 })
 
-// Middleware de validação de payload com Joi (login)
 function loginIsValid(schema: Joi.ObjectSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error } = schema.validate(req.body)

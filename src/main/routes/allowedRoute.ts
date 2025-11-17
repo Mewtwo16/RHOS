@@ -1,9 +1,6 @@
 import { Request, Response } from 'express'
 import allowedService from '../services/allowedService'
 
-/**
- * Retorna a lista de permissões disponíveis (allowed) para associação a cargos.
- */
 export async function getAllowedRoute(_req: Request, res: Response) {
   try {
     const r = await allowedService.listAll()

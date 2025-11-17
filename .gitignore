@@ -6,3 +6,8 @@ out
 *.log*
 docs
 .md
+
+# Variáveis de ambiente (não commitar!)
+.env
+.env.local
+.env.*.local

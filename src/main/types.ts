@@ -1,11 +1,9 @@
-/*
-    Tipos compartilhados entre main/preload/renderer
-*/
+import { Request } from 'express'
 
 export interface AnyResponse {
   success: boolean
   message?: string
-  data?: any[]
+  data?: any
 }
 
 export interface LoginResponse {
@@ -19,6 +17,10 @@ export interface AuthUser {
   usuario: string
   cargo: string[]
   permissoes: string[]
+}
+
+export interface AuthRequest extends Request {
+  user?: AuthUser
 }
 
 export interface User {
@@ -65,6 +67,13 @@ export interface AllowedResponse {
   success: boolean
   data?: AllowedPermission[]
   message?: string
+}
+
+export interface LogEntry {
+  user_id?: number | null
+  who?: string | null
+  where: string
+  what: string
 }
 
 export interface IElectronAPI {

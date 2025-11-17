@@ -2,20 +2,46 @@ import type { LoginResponse } from '../types'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import db from '../db/db'
+import logService from './logService'
 
 class AuthService {
-  // Autentica usuário por login/senha, gera JWT com cargos e permissões agregadas
   async login(usuario: string, senha: string): Promise<LoginResponse> {
     try {
       const user = await db('users').where({ login: usuario }).first()
-      if (!user) return { success: false, message: 'Usuário inválido ou inexistente' }
-      if (user.status !== 1) return { success: false, message: 'Usuário desativado' }
+      if (!user) {
+        await logService.write({
+          user_id: null,
+          who: usuario,
+          where: 'auth',
+          what: 'Login failed: user not found'
+        })
+        return { success: false, message: 'Usuário inválido ou inexistente' }
+      }
+      if (user.status !== 1) {
+        await logService.write({
+          user_id: user.id,
+          who: usuario,
+          where: 'auth',
+          what: 'Login failed: user inactive'
+        })
+        return { success: false, message: 'Usuário desativado' }
+      }
+      
       const senhaOk = await bcrypt.compare(senha, user.password_hash)
-      if (!senhaOk) return { success: false, message: 'Senha inválida' }
+      if (!senhaOk) {
+        await logService.write({
+          user_id: user.id,
+          who: usuario,
+          where: 'auth',
+          what: 'Login failed: invalid password'
+        })
+        return { success: false, message: 'Senha inválida' }
+      }
 
       const permissions = await this.getUserPermissions(user.id)
       const roles = await this.getUserRoles(user.id)
       const secret = process.env.JWT_SECRET
+      
       if (!secret) return { success: false, message: 'Configuração interna ausente (JWT_SECRET)' }
 
       const token = jwt.sign(
@@ -23,13 +49,20 @@ class AuthService {
         secret,
         { expiresIn: '8h' }
       )
+      
+      await logService.write({
+        user_id: user.id,
+        who: usuario,
+        where: 'auth',
+        what: 'Login successful'
+      })
+      
       return { success: true, message: 'Login bem-sucedido', token }
     } catch (error) {
       return { success: false, message: 'Falha interna ao autenticar' }
     }
   }
 
-  // Agrega permissões via junções 
   private async getUserPermissions(userId: number): Promise<string[]> {
     try {
       const permissions = (await db('allowed')
@@ -44,7 +77,6 @@ class AuthService {
     }
   }
 
-  // Lista cargos associados ao usuário
   private async getUserRoles(userId: number): Promise<string[]> {
     try {
       const roles = (await db('roles')

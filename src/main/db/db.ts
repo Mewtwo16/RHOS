@@ -1,5 +1,3 @@
-// Conexão centralizada com o banco de dados
-
 import knex from 'knex'
 import dotenv from 'dotenv'
 import type { Knex } from 'knex'
