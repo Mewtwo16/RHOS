@@ -16,6 +16,10 @@ function Login() {
     setError('')
 
     try {
+      console.log('🔐 Tentando fazer login...')
+      console.log('URL:', 'http://localhost:4040/api/login')
+      console.log('Dados:', { usuario, senha: '***' })
+
       const response = await fetch('http://localhost:4040/api/login', {
         method: 'POST',
         headers: {
@@ -24,10 +28,14 @@ function Login() {
         body: JSON.stringify({ usuario, senha })
       })
 
+      console.log('✅ Resposta recebida:', response.status, response.statusText)
+
       const data = await response.json()
+      console.log('📦 Dados:', data)
 
       if (data.success && data.token) {
         localStorage.setItem('authToken', data.token)
+        console.log('✅ Token salvo, redirecionando...')
         
         if (window.api && window.api.notifyLoginSuccess) {
           window.api.notifyLoginSuccess()
@@ -37,10 +45,14 @@ function Login() {
           navigate('/home')
         }, 100)
       } else {
+        console.error('❌ Login falhou:', data.message)
         setError(data.message || 'Erro ao fazer login')
       }
     } catch (err: any) {
-      setError(err.message || 'Erro na conexão com o servidor')
+      console.error('❌ Erro capturado:', err)
+      console.error('Tipo do erro:', err.constructor.name)
+      console.error('Mensagem:', err.message)
+      setError(`Erro na conexão: ${err.message}`)
     } finally {
       setLoading(false)
     }
