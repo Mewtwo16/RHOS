@@ -33,7 +33,7 @@ body {
   height: 520px;
   background-color: white;
   border-radius: 20px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2);
+ /* box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4), 0 10px 40px rgba(0, 0, 0, 0.2); */
   overflow: hidden;
   animation: slideIn 0.4s ease-out;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -41,7 +41,7 @@ body {
 
 .container:hover {
   transform: translateY(-5px);
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45), 0 15px 50px rgba(0, 0, 0, 0.25);
+  /* box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45), 0 15px 50px rgba(0, 0, 0, 0.25);*/
 }
 
 /* Área de arrastar */
