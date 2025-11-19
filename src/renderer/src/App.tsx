@@ -7,6 +7,7 @@ import Home from './pages/Home'
 import Usuarios from './pages/Usuarios'
 import Cargos from './pages/Cargos'
 import Logs from './pages/Logs'
+import Funcionarios from './pages/Funcionarios'
 import './assets/css/global.css'
 
 function App(): React.JSX.Element {
@@ -36,6 +37,7 @@ function App(): React.JSX.Element {
           <Route path="home" element={<Home />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="cargos" element={<Cargos />} />
+          <Route path="funcionarios" element={<Funcionarios />} />
           <Route path="logs" element={<Logs />} />
         </Route>
         <Route index element={<Navigate to={initialRoute} replace />} />

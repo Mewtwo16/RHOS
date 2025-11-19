@@ -112,6 +112,100 @@ CREATE TABLE IF NOT EXISTS `RHOS`.`audit_logs` (
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8;
 
 
+-- -----------------------------------------------------
+-- Table `RHOS`.`cargos_clt`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `RHOS`.`cargos_clt` (
+  `id_cargo` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nome_cargo` VARCHAR(100) NOT NULL,
+  `descricao` TEXT NULL,
+  `salario_base` DECIMAL(10,2) NOT NULL,
+  `carga_horaria_semanal` INT UNSIGNED DEFAULT 44,
+  `nivel` VARCHAR(50) NULL,
+  `departamento` VARCHAR(100) NULL,
+  `data_criacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ativo` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_cargo`),
+  INDEX `idx_nome_cargo` (`nome_cargo` ASC) VISIBLE,
+  INDEX `idx_ativo` (`ativo` ASC) VISIBLE
+) ENGINE = InnoDB DEFAULT CHARSET=utf8;
+
+-- -----------------------------------------------------
+-- Table `RHOS`.`funcionarios`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `RHOS`.`funcionarios` (
+  `id_funcionario` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  
+  -- Dados Pessoais
+  `nome_completo` VARCHAR(200) NOT NULL,
+  `cpf` VARCHAR(14) NOT NULL,
+  `rg` VARCHAR(20) NULL,
+  `data_nascimento` DATE NOT NULL,
+  `sexo` VARCHAR(20) NULL,
+  `estado_civil` VARCHAR(30) NULL,
+  `nacionalidade` VARCHAR(50) DEFAULT 'Brasileiro',
+  
+  -- Contato
+  `telefone` VARCHAR(20) NULL,
+  `email` VARCHAR(100) NULL,
+  
+  -- Endereço
+  `cep` VARCHAR(10) NULL,
+  `logradouro` VARCHAR(200) NULL,
+  `numero` VARCHAR(10) NULL,
+  `complemento` VARCHAR(100) NULL,
+  `bairro` VARCHAR(100) NULL,
+  `cidade` VARCHAR(100) NULL,
+  `estado` VARCHAR(2) NULL,
+  
+  -- Dados Trabalhistas
+  `id_cargo` INT UNSIGNED NOT NULL,
+  `data_admissao` DATE NOT NULL,
+  `data_demissao` DATE NULL,
+  `status` VARCHAR(20) DEFAULT 'ativo',
+  `tipo_contrato` VARCHAR(30) DEFAULT 'CLT',
+  
+  -- Dados Bancários
+  `banco` VARCHAR(100) NULL,
+  `agencia` VARCHAR(10) NULL,
+  `conta` VARCHAR(20) NULL,
+  `tipo_conta` VARCHAR(20) NULL,
+  
+  -- Dados de Pagamento
+  `salario_atual` DECIMAL(10,2) NOT NULL,
+  `vale_transporte` TINYINT(1) DEFAULT 0,
+  `vale_alimentacao` DECIMAL(10,2) DEFAULT 0,
+  `plano_saude` TINYINT(1) DEFAULT 0,
+  `plano_odonto` TINYINT(1) DEFAULT 0,
+  
+  -- Dependentes para IR
+  `numero_dependentes` INT UNSIGNED DEFAULT 0,
+  
+  -- Documentos
+  `ctps_numero` VARCHAR(20) NULL,
+  `ctps_serie` VARCHAR(20) NULL,
+  `ctps_uf` VARCHAR(2) NULL,
+  `pis_pasep` VARCHAR(20) NULL,
+  `titulo_eleitor` VARCHAR(20) NULL,
+  `observacoes` TEXT NULL,
+  
+  -- Metadados
+  `data_cadastro` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ultima_atualizacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (`id_funcionario`),
+  UNIQUE INDEX `funcionarios_cpf_UNIQUE` (`cpf` ASC) VISIBLE,
+  INDEX `fk_funcionarios_cargo_idx` (`id_cargo` ASC) VISIBLE,
+  INDEX `idx_status` (`status` ASC) VISIBLE,
+  INDEX `idx_nome` (`nome_completo` ASC) VISIBLE,
+  CONSTRAINT `fk_funcionarios_cargo`
+    FOREIGN KEY (`id_cargo`)
+    REFERENCES `RHOS`.`cargos_clt` (`id_cargo`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET=utf8;
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
@@ -148,9 +242,24 @@ INSERT INTO RHOS.allowed (permission_name) VALUES
   ('roles:update'),
   ('roles:delete'),
   ('roles:view'),
+  -- Permissions
+  ('permissions:view'),
   -- Logs (apenas leitura e visualização)
   ('logs:read'),
-  ('logs:view')
+  ('logs:view'),
+  -- Cargos CLT
+  ('cargos:create'),
+  ('cargos:read'),
+  ('cargos:update'),
+  ('cargos:delete'),
+  ('cargos:view'),
+  -- Funcionários
+  ('funcionarios:create'),
+  ('funcionarios:read'),
+  ('funcionarios:update'),
+  ('funcionarios:delete'),
+  ('funcionarios:view'),
+  ('funcionarios:calcular')
 ON DUPLICATE KEY UPDATE permission_name = VALUES(permission_name);
 
 INSERT INTO RHOS.roles_allowed (roles_id, allowed_id)
@@ -169,9 +278,24 @@ JOIN RHOS.allowed a ON a.permission_name IN (
   'roles:update',
   'roles:delete',
   'roles:view',
+  -- Permissions
+  'permissions:view',
   -- Logs
   'logs:read',
-  'logs:view'
+  'logs:view',
+  -- Cargos CLT
+  'cargos:create',
+  'cargos:read',
+  'cargos:update',
+  'cargos:delete',
+  'cargos:view',
+  -- Funcionários
+  'funcionarios:create',
+  'funcionarios:read',
+  'funcionarios:update',
+  'funcionarios:delete',
+  'funcionarios:view',
+  'funcionarios:calcular'
 )
 WHERE r.role_name = 'Administrador'
 ON DUPLICATE KEY UPDATE roles_id = roles_id;

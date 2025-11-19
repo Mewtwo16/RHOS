@@ -1,5 +1,5 @@
 import '../assets/css/global.css'
-import logoImg from '../assets/img/logo-2.png'
+import logoImg from '../assets/img/logo.png'
 
 function Home() {
   return (
@@ -10,7 +10,7 @@ function Home() {
       justifyContent: 'center',
       height: '100%',
       width: '100%',
-      background: '#fafbfc'
+      background: 'transparent'
     }}>
       <img 
         src={logoImg} 

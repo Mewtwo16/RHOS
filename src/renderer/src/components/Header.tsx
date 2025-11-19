@@ -1,9 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useState, useRef } from 'react'
 import '../assets/css/Menu.css'
 import logoImg from '../assets/img/logo.png'
 
 function Header() {
   const navigate = useNavigate()
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleLogout = () => {
     localStorage.removeItem('authToken')
@@ -15,6 +18,22 @@ function Header() {
     }
   }
 
+  const handleMenuEnter = (menuName: string) => {
+    // Cancela qualquer timeout de fechamento pendente
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    setOpenMenu(menuName)
+  }
+
+  const handleMenuLeave = () => {
+    // Adiciona um delay antes de fechar o menu
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenMenu(null)
+    }, 300) // 300ms de delay
+  }
+
   return (
     <header className="box-header">
       <nav className="box-menu-principal">
@@ -24,7 +43,11 @@ function Header() {
 
         <ul className="menu">
           {/* Recrutamento */}
-          <li className="dropdown">
+          <li 
+            className={`dropdown ${openMenu === 'recrutamento' ? 'menu-aberto' : ''}`}
+            onMouseEnter={() => handleMenuEnter('recrutamento')}
+            onMouseLeave={handleMenuLeave}
+          >
             <a href="#" role="button" aria-haspopup="true">
               Recrutamento
             </a>
@@ -36,7 +59,11 @@ function Header() {
           </li>
 
           {/* Desempenho */}
-          <li className="dropdown">
+          <li 
+            className={`dropdown ${openMenu === 'desempenho' ? 'menu-aberto' : ''}`}
+            onMouseEnter={() => handleMenuEnter('desempenho')}
+            onMouseLeave={handleMenuLeave}
+          >
             <a href="#" role="button" aria-haspopup="true">
               Desempenho
             </a>
@@ -48,21 +75,33 @@ function Header() {
           </li>
 
           {/* Gestão de RH */}
-          <li className="dropdown">
+          <li 
+            className={`dropdown ${openMenu === 'gestao' ? 'menu-aberto' : ''}`}
+            onMouseEnter={() => handleMenuEnter('gestao')}
+            onMouseLeave={handleMenuLeave}
+          >
             <a href="#" role="button" aria-haspopup="true">
               Gestão de RH
             </a>
             <ul className="submenus">
-              <li><a href="#" role="button">Funcionarios</a></li>
-              <li><a href="#" role="button">Gestão de ferias</a></li>
-              <li><a href="#" role="button">Relogio de ponto</a></li>
+              <li>
+                <Link to="/funcionarios" role="button">
+                  Funcionários
+                </Link>
+              </li>
+              <li><a href="#" role="button">Gestão de férias</a></li>
+              <li><a href="#" role="button">Relógio de ponto</a></li>
               <li><a href="#" role="button">Gerenciamento de custos</a></li>
               <li><a href="#" role="button">Desligamento</a></li>
             </ul>
           </li>
 
           {/* Desenvolvimento e Satisfação */}
-          <li className="dropdown">
+          <li 
+            className={`dropdown ${openMenu === 'desenvolvimento' ? 'menu-aberto' : ''}`}
+            onMouseEnter={() => handleMenuEnter('desenvolvimento')}
+            onMouseLeave={handleMenuLeave}
+          >
             <a href="#" role="button" aria-haspopup="true">
               Desenvolvimento e Satisfação
             </a>
@@ -74,7 +113,11 @@ function Header() {
           </li>
 
           {/* Integração */}
-          <li className="dropdown">
+          <li 
+            className={`dropdown ${openMenu === 'integracao' ? 'menu-aberto' : ''}`}
+            onMouseEnter={() => handleMenuEnter('integracao')}
+            onMouseLeave={handleMenuLeave}
+          >
             <a href="#" role="button" aria-haspopup="true">
               Integração
             </a>
@@ -84,7 +127,11 @@ function Header() {
           </li>
 
           {/* Relatórios */}
-          <li className="dropdown">
+          <li 
+            className={`dropdown ${openMenu === 'relatorios' ? 'menu-aberto' : ''}`}
+            onMouseEnter={() => handleMenuEnter('relatorios')}
+            onMouseLeave={handleMenuLeave}
+          >
             <a href="#" role="button" aria-haspopup="true">
               Relatórios
             </a>
@@ -101,7 +148,11 @@ function Header() {
           </li>
 
           {/* Sistema */}
-          <li className="dropdown">
+          <li 
+            className={`dropdown ${openMenu === 'sistema' ? 'menu-aberto' : ''}`}
+            onMouseEnter={() => handleMenuEnter('sistema')}
+            onMouseLeave={handleMenuLeave}
+          >
             <a href="#" role="button" aria-haspopup="true">
               Sistema
             </a>

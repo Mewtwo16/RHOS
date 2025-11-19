@@ -2,13 +2,9 @@ import jwt from 'jsonwebtoken'
 import { Response, NextFunction } from 'express'
 import type { AuthUser, AuthRequest } from '../types'
 
-/**
- * Middleware para verificar o JWT e anexar o usuário à requisição.
- * Use este middleware antes de rotas que exigem autenticação.
- */
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1] // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1] 
 
   if (!token) {
     return res.status(401).json({ success: false, message: 'Token não fornecido' })
@@ -33,12 +29,6 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   }
 }
 
-/**
- * Middleware para verificar se o usuário possui as permissões necessárias.
- * Use após o authenticateToken.
- * 
- * Exemplo: requirePermissions('users:create', 'users:update')
- */
 export function requirePermissions(...perms: string[]) {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     const user = req.user
@@ -57,12 +47,6 @@ export function requirePermissions(...perms: string[]) {
   }
 }
 
-/**
- * Middleware para verificar se o usuário possui um dos cargos necessários.
- * Use após o authenticateToken.
- * 
- * Exemplo: requireRoles('admin', 'manager')
- */
 export function requireRoles(...roles: string[]) {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     const user = req.user
