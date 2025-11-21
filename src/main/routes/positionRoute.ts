@@ -1,5 +1,5 @@
 import { Router, Response } from 'express'
-import cargoService from '../services/cargoService'
+import positionService from '../services/positionService'
 import logService from '../services/logService'
 import { AuthRequest } from '../types'
 
@@ -7,8 +7,8 @@ const router = Router()
 
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
-    const apenasAtivos = req.query.ativos !== 'false'
-    const cargos = await cargoService.listarCargos(apenasAtivos)
+    const apenasAtivos = req.query.actives !== 'false'
+    const cargos = await positionService.listarCargos(apenasAtivos)
     
     res.json({
       success: true,
@@ -26,7 +26,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id)
-    const cargo = await cargoService.buscarCargoPorId(id)
+    const cargo = await positionService.buscarCargoPorId(id)
     
     if (!cargo) {
       return res.status(404).json({
@@ -50,22 +50,22 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 
 router.post('/', async (req: AuthRequest, res: Response) => {
   try {
-    const { nome_cargo, descricao, salario_base, carga_horaria_semanal, nivel, departamento } = req.body
+    const { position_name, description, base_salary, weekly_hours, level, department } = req.body
     
-    if (!nome_cargo || !salario_base) {
+    if (!position_name || !base_salary) {
       return res.status(400).json({
         success: false,
         message: 'Nome do cargo e salário base são obrigatórios'
       })
     }
     
-    const id = await cargoService.criarCargo(req.body)
+    const id = await positionService.criarCargo(req.body)
     
     await logService.write({
       user_id: req.user?.id,
       who: req.user?.usuario || 'Sistema',
       where: 'Cargos CLT',
-      what: `Criou o cargo: ${nome_cargo}`
+      what: `Criou o cargo: ${position_name}`
     })
     
     res.status(201).json({
@@ -85,7 +85,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id)
-    const cargo = await cargoService.buscarCargoPorId(id)
+    const cargo = await positionService.buscarCargoPorId(id)
     
     if (!cargo) {
       return res.status(404).json({
@@ -94,14 +94,14 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
       })
     }
     
-    const sucesso = await cargoService.atualizarCargo(id, req.body)
+    const sucesso = await positionService.atualizarCargo(id, req.body)
     
     if (sucesso) {
       await logService.write({
         user_id: req.user?.id,
         who: req.user?.usuario || 'Sistema',
         where: 'Cargos CLT',
-        what: `Atualizou o cargo: ${cargo.nome_cargo}`
+        what: `Atualizou o cargo: ${cargo.position_name}`
       })
       
       res.json({
@@ -126,7 +126,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id)
-    const cargo = await cargoService.buscarCargoPorId(id)
+    const cargo = await positionService.buscarCargoPorId(id)
     
     if (!cargo) {
       return res.status(404).json({
@@ -135,7 +135,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
       })
     }
     
-    const emUso = await cargoService.cargoEmUso(id)
+    const emUso = await positionService.cargoEmUso(id)
     if (emUso) {
       return res.status(400).json({
         success: false,
@@ -143,14 +143,14 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
       })
     }
     
-    const sucesso = await cargoService.deletarCargo(id)
+    const sucesso = await positionService.deletarCargo(id)
     
     if (sucesso) {
       await logService.write({
         user_id: req.user?.id,
         who: req.user?.usuario || 'Sistema',
         where: 'Cargos CLT',
-        what: `Deletou o cargo: ${cargo.nome_cargo}`
+        what: `Deletou o cargo: ${cargo.position_name}`
       })
       
       res.json({

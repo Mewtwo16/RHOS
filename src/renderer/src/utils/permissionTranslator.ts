@@ -8,16 +8,37 @@ export const permissionTranslations: Record<string, string> = {
   'users:delete': 'Usuários: Deletar',
   'users:view': 'Usuários: Visualizar',
 
-  // Cargos
-  'roles:create': 'Cargos: Criar',
-  'roles:read': 'Cargos: Consultar',
-  'roles:update': 'Cargos: Alterar',
-  'roles:delete': 'Cargos: Deletar',
-  'roles:view': 'Cargos: Visualizar',
+  // Perfis de Acesso
+  'profiles:create': 'Perfis: Criar',
+  'profiles:read': 'Perfis: Consultar',
+  'profiles:update': 'Perfis: Alterar',
+  'profiles:delete': 'Perfis: Deletar',
+  'profiles:view': 'Perfis: Visualizar',
 
   // Logs
   'logs:read': 'Logs: Consultar',
   'logs:view': 'Logs: Visualizar',
+
+  // Permissões
+  'permissions:view': 'Permissões: Visualizar',
+  'permissions:create': 'Permissões: Criar',
+  'permissions:update': 'Permissões: Alterar',
+  'permissions:delete': 'Permissões: Deletar',
+
+  // Funcionários
+  'employees:create': 'Funcionários: Criar',
+  'employees:read': 'Funcionários: Consultar',
+  'employees:update': 'Funcionários: Alterar',
+  'employees:delete': 'Funcionários: Deletar',
+  'employees:view': 'Funcionários: Visualizar',
+  'employees:calculate': 'Funcionários: Calcular Folha',
+
+  // Cargos
+  'positions:create': 'Cargos: Criar',
+  'positions:read': 'Cargos: Consultar',
+  'positions:update': 'Cargos: Alterar',
+  'positions:delete': 'Cargos: Deletar',
+  'positions:view': 'Cargos: Visualizar',
 }
 
 /**
@@ -39,7 +60,7 @@ export function translatePermissions(permissions: string[]): string[] {
 }
 
 /**
- * Agrupa permissões por categoria (Usuários, Cargos, Logs, etc)
+ * Agrupa permissões por categoria (Usuários, Perfis, Logs, etc)
  * @param permissions - Array de permissões técnicas
  * @returns Objeto agrupado por categoria
  */
@@ -66,8 +87,11 @@ export function groupPermissionsByCategory(permissions: string[]): Record<string
 function getCategoryName(category: string): string {
   const categoryNames: Record<string, string> = {
     'users': 'Usuários',
-    'roles': 'Cargos',
+    'profiles': 'Perfis de Acesso',
     'logs': 'Logs',
+    'permissions': 'Permissões',
+    'employees': 'Funcionários',
+    'positions': 'Cargos',
   }
 
   return categoryNames[category] || category
@@ -83,6 +107,7 @@ export function getActionName(action: string): string {
     'update': 'Alterar',
     'delete': 'Deletar',
     'view': 'Visualizar',
+    'calculate': 'Calcular',
   }
 
   return actionNames[action] || action

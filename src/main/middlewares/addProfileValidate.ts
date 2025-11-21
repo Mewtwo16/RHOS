@@ -3,13 +3,13 @@ import Joi from 'joi'
 
 const permissionPattern = /^[a-z0-9._-]+:[a-z0-9._-]+$/
 
-export const addRoleSchema = Joi.object({
-  role_name: Joi.string().min(3).max(100).required(),
+export const addProfileSchema = Joi.object({
+  profile_name: Joi.string().min(3).max(100).required(),
   description: Joi.string().allow(null, '').max(255),
   permissions: Joi.array().items(Joi.string().pattern(permissionPattern)).max(200).default([])
 })
 
-export function roleIsValid(schema: Joi.ObjectSchema) {
+export function profileIsValid(schema: Joi.ObjectSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.body, { abortEarly: false })
     if (error) {

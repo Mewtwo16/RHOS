@@ -66,9 +66,9 @@ class AuthService {
   private async getUserPermissions(userId: number): Promise<string[]> {
     try {
       const permissions = (await db('allowed')
-        .join('roles_allowed', 'allowed.id', '=', 'roles_allowed.allowed_id')
-        .join('role_users', 'roles_allowed.roles_id', '=', 'role_users.roles_id')
-        .where('role_users.users_id', userId)
+        .join('profile_permissions', 'allowed.id', '=', 'profile_permissions.permission_id')
+        .join('profile_users', 'profile_permissions.profile_id', '=', 'profile_users.profile_id')
+        .where('profile_users.users_id', userId)
         .distinct('allowed.permission_name')
         .pluck('permission_name')) as string[]
       return permissions
@@ -79,11 +79,11 @@ class AuthService {
 
   private async getUserRoles(userId: number): Promise<string[]> {
     try {
-      const roles = (await db('roles')
-        .join('role_users', 'roles.id', '=', 'role_users.roles_id')
-        .where('role_users.users_id', userId)
-        .distinct('roles.role_name')
-        .pluck('role_name')) as string[]
+      const roles = (await db('profiles')
+        .join('profile_users', 'profiles.id', '=', 'profile_users.profile_id')
+        .where('profile_users.users_id', userId)
+        .distinct('profiles.profile_name')
+        .pluck('profile_name')) as string[]
       return roles
     } catch {
       return []

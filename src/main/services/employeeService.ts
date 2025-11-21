@@ -1,44 +1,44 @@
 import db from '../db/db'
 
 interface Funcionario {
-  id_funcionario?: number
-  nome_completo: string
+  id?: number
+  full_name: string
   cpf: string
   rg?: string
-  data_nascimento: string
-  sexo?: string
-  estado_civil?: string
-  nacionalidade?: string
-  telefone?: string
+  birth_date: string
+  gender?: string
+  marital_status?: string
+  nationality?: string
+  phone?: string
   email?: string
-  cep?: string
-  logradouro?: string
-  numero?: string
-  complemento?: string
-  bairro?: string
-  cidade?: string
-  estado?: string
-  id_cargo: number
-  data_admissao: string
-  data_demissao?: string
+  zip_code?: string
+  street?: string
+  street_number?: string
+  complement?: string
+  neighborhood?: string
+  city?: string
+  state?: string
+  position_id: number
+  hire_date: string
+  termination_date?: string
   status?: string
-  tipo_contrato?: string
-  banco?: string
-  agencia?: string
-  conta?: string
-  tipo_conta?: string
-  salario_atual: number
-  vale_transporte?: boolean
-  vale_alimentacao?: number
-  plano_saude?: boolean
-  plano_odonto?: boolean
-  numero_dependentes?: number
+  contract_type?: string
+  bank?: string
+  agency?: string
+  account?: string
+  account_type?: string
+  current_salary: number
+  transportation_voucher?: boolean
+  meal_voucher?: number
+  health_insurance?: boolean
+  dental_insurance?: boolean
+  dependents?: number
   ctps_numero?: string
   ctps_serie?: string
   ctps_uf?: string
   pis_pasep?: string
   titulo_eleitor?: string
-  observacoes?: string
+  notes?: string
 }
 
 interface CalculoFolha {
@@ -59,15 +59,15 @@ interface CalculoFolha {
 
 class FuncionarioService {
   async listarFuncionarios(status?: string): Promise<any[]> {
-    let query = db('funcionarios as f')
-      .leftJoin('cargos_clt as c', 'f.id_cargo', 'c.id_cargo')
+    let query = db('employees as f')
+      .leftJoin('positions as c', 'f.position_id', 'c.id')
       .select(
         'f.*',
-        'c.nome_cargo',
-        'c.nivel',
-        'c.departamento'
+        'c.position_name',
+        'c.level',
+        'c.department'
       )
-      .orderBy('f.nome_completo')
+      .orderBy('f.full_name')
 
     if (status) {
       query = query.where('f.status', status)
@@ -77,23 +77,23 @@ class FuncionarioService {
   }
 
   async buscarFuncionarioPorId(id: number): Promise<any | null> {
-    const funcionario = await db('funcionarios as f')
-      .leftJoin('cargos_clt as c', 'f.id_cargo', 'c.id_cargo')
+    const funcionario = await db('employees as f')
+      .leftJoin('positions as c', 'f.position_id', 'c.id')
       .select(
         'f.*',
-        'c.nome_cargo',
-        'c.nivel',
-        'c.departamento',
-        'c.salario_base'
+        'c.position_name',
+        'c.level',
+        'c.department',
+        'c.base_salary'
       )
-      .where('f.id_funcionario', id)
+      .where('f.id', id)
       .first()
 
     return funcionario || null
   }
 
   async buscarFuncionarioPorCPF(cpf: string): Promise<Funcionario | null> {
-    const funcionario = await db('funcionarios')
+    const funcionario = await db('employees')
       .where('cpf', cpf)
       .first()
 
@@ -101,44 +101,44 @@ class FuncionarioService {
   }
 
   async criarFuncionario(funcionario: Funcionario): Promise<number> {
-    const [id] = await db('funcionarios').insert({
-      nome_completo: funcionario.nome_completo,
+    const [id] = await db('employees').insert({
+      full_name: funcionario.full_name,
       cpf: funcionario.cpf,
       rg: funcionario.rg || null,
-      data_nascimento: funcionario.data_nascimento,
-      sexo: funcionario.sexo || null,
-      estado_civil: funcionario.estado_civil || null,
-      nacionalidade: funcionario.nacionalidade || 'Brasileiro',
-      telefone: funcionario.telefone || null,
+      birth_date: funcionario.birth_date,
+      gender: funcionario.gender || null,
+      marital_status: funcionario.marital_status || null,
+      nationality: funcionario.nationality || 'Brasileiro',
+      phone: funcionario.phone || null,
       email: funcionario.email || null,
-      cep: funcionario.cep || null,
-      logradouro: funcionario.logradouro || null,
-      numero: funcionario.numero || null,
-      complemento: funcionario.complemento || null,
-      bairro: funcionario.bairro || null,
-      cidade: funcionario.cidade || null,
-      estado: funcionario.estado || null,
-      id_cargo: funcionario.id_cargo,
-      data_admissao: funcionario.data_admissao,
-      data_demissao: funcionario.data_demissao || null,
+      zip_code: funcionario.zip_code || null,
+      street: funcionario.street || null,
+      street_number: funcionario.street_number || null,
+      complement: funcionario.complement || null,
+      neighborhood: funcionario.neighborhood || null,
+      city: funcionario.city || null,
+      state: funcionario.state || null,
+      position_id: funcionario.position_id,
+      hire_date: funcionario.hire_date,
+      termination_date: funcionario.termination_date || null,
       status: funcionario.status || 'ativo',
-      tipo_contrato: funcionario.tipo_contrato || 'CLT',
-      banco: funcionario.banco || null,
-      agencia: funcionario.agencia || null,
-      conta: funcionario.conta || null,
-      tipo_conta: funcionario.tipo_conta || null,
-      salario_atual: funcionario.salario_atual,
-      vale_transporte: funcionario.vale_transporte ? 1 : 0,
-      vale_alimentacao: funcionario.vale_alimentacao || 0,
-      plano_saude: funcionario.plano_saude ? 1 : 0,
-      plano_odonto: funcionario.plano_odonto ? 1 : 0,
-      numero_dependentes: funcionario.numero_dependentes || 0,
+      contract_type: funcionario.contract_type || 'CLT',
+      bank: funcionario.bank || null,
+      agency: funcionario.agency || null,
+      account: funcionario.account || null,
+      account_type: funcionario.account_type || null,
+      current_salary: funcionario.current_salary,
+      transportation_voucher: funcionario.transportation_voucher ? 1 : 0,
+      meal_voucher: funcionario.meal_voucher || 0,
+      health_insurance: funcionario.health_insurance ? 1 : 0,
+      dental_insurance: funcionario.dental_insurance ? 1 : 0,
+      dependents: funcionario.dependents || 0,
       ctps_numero: funcionario.ctps_numero || null,
       ctps_serie: funcionario.ctps_serie || null,
       ctps_uf: funcionario.ctps_uf || null,
       pis_pasep: funcionario.pis_pasep || null,
       titulo_eleitor: funcionario.titulo_eleitor || null,
-      observacoes: funcionario.observacoes || null
+      notes: funcionario.notes || null
     })
 
     return id
@@ -158,19 +158,19 @@ class FuncionarioService {
       return false
     }
 
-    const result = await db('funcionarios')
-      .where('id_funcionario', id)
+    const result = await db('employees')
+      .where('id', id)
       .update(dadosAtualizacao)
 
     return result > 0
   }
 
   async inativarFuncionario(id: number, dataDesligamento: string): Promise<boolean> {
-    const result = await db('funcionarios')
-      .where('id_funcionario', id)
+    const result = await db('employees')
+      .where('id', id)
       .update({
         status: 'demitido',
-        data_demissao: dataDesligamento
+        termination_date: dataDesligamento
       })
 
     return result > 0
@@ -198,9 +198,9 @@ class FuncionarioService {
     return Math.min(inss, 908.85)
   }
 
-  private calcularIRRF(salarioBruto: number, inss: number, dependentes: number): number {
+  private calcularIRRF(salarioBruto: number, inss: number, dependents: number): number {
     const deducaoPorDependente = 189.59
-    const baseCalculo = salarioBruto - inss - (deducaoPorDependente * dependentes)
+    const baseCalculo = salarioBruto - inss - (deducaoPorDependente * dependents)
 
     if (baseCalculo <= 2259.20) return 0
     if (baseCalculo <= 2826.65) return Math.max(0, baseCalculo * 0.075 - 169.44)
@@ -227,12 +227,13 @@ class FuncionarioService {
       throw new Error('Funcionário não encontrado')
     }
 
-    const salarioBruto = funcionario.salario_atual
+    const salarioBruto = Number(funcionario.current_salary) || 0
     const inss = this.calcularINSS(salarioBruto)
-    const irrf = this.calcularIRRF(salarioBruto, inss, funcionario.numero_dependentes || 0)
+    const dependentes = Number(funcionario.dependents) || 0
+    const irrf = this.calcularIRRF(salarioBruto, inss, dependentes)
 
     let valeTransporteDesc = 0
-    if (funcionario.vale_transporte) {
+    if (funcionario.transportation_voucher) {
       valeTransporteDesc = salarioBruto * 0.06
     }
 
@@ -241,7 +242,7 @@ class FuncionarioService {
 
     const encargos = this.calcularEncargosPatronais(salarioBruto)
 
-    const beneficiosEmpresa = (funcionario.vale_alimentacao || 0)
+    const beneficiosEmpresa = Number(funcionario.meal_voucher) || 0
 
     const custoTotal = salarioBruto + encargos.total + beneficiosEmpresa
 
@@ -263,18 +264,18 @@ class FuncionarioService {
   }
 
   async obterEstatisticas(): Promise<any> {
-    const totalAtivos = await db('funcionarios')
+    const totalAtivos = await db('employees')
       .where('status', 'ativo')
       .count('* as count')
       .first()
 
-    const totalFuncionarios = await db('funcionarios')
+    const totalFuncionarios = await db('employees')
       .count('* as count')
       .first()
 
-    const custoTotal = await db('funcionarios')
+    const custoTotal = await db('employees')
       .where('status', 'ativo')
-      .sum('salario_atual as total')
+      .sum('current_salary as total')
       .first()
 
     return {

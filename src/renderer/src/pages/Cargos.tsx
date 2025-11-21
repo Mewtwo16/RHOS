@@ -1,86 +1,61 @@
 import { useState, useEffect } from 'react'
-import { translatePermission, groupPermissionsByCategory } from '../utils/permissionTranslator'
 import { hasPermission } from '../utils/auth'
 
-interface Role {
+interface Position {
   id: number
-  role_name: string
+  position_name: string
   description: string
-  permissions?: string[]
+  base_salary: number
+  weekly_hours: number
+  level: string
+  department: string
+  active: boolean
 }
 
-interface Permission {
-  id: number
-  permission_name: string
-}
-
-function Cargos() {
-  const [roles, setRoles] = useState<Role[]>([])
-  const [permissions, setPermissions] = useState<Permission[]>([])
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
+function CargosFunc() {
+  const [positions, setPositions] = useState<Position[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [editingRole, setEditingRole] = useState<Role | null>(null)
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null)
   const [formData, setFormData] = useState({
-    role_name: '',
-    description: ''
+    position_name: '',
+    description: '',
+    base_salary: '',
+    weekly_hours: '44',
+    level: '',
+    department: '',
+    active: true
   })
 
   useEffect(() => {
-    loadRoles()
-    loadPermissions()
+    loadPositions()
   }, [])
 
-  const loadRoles = async () => {
+  const loadPositions = async () => {
     try {
       const token = localStorage.getItem('authToken')
-      const response = await fetch('http://localhost:4040/api/roles', {
+      // Adiciona ?actives=false para trazer todos os cargos (ativos e inativos)
+      const response = await fetch('http://localhost:4040/api/positions?actives=false', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       const data = await response.json()
       if (data.success) {
-        setRoles(data.data || [])
+        setPositions(data.data || [])
       }
     } catch (err) {
       console.error('Erro ao carregar cargos:', err)
     }
   }
 
-  const loadPermissions = async () => {
-    try {
-      const token = localStorage.getItem('authToken')
-      const response = await fetch('http://localhost:4040/api/allowed', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      const data = await response.json()
-      if (data.success) {
-        setPermissions(data.data || [])
-      }
-    } catch (err) {
-      console.error('Erro ao carregar permissões:', err)
-    }
-  }
-
-  const handlePermissionToggle = (permissionName: string) => {
-    setSelectedPermissions(prev => {
-      if (prev.includes(permissionName)) {
-        return prev.filter(p => p !== permissionName)
-      } else {
-        return [...prev, permissionName]
-      }
-    })
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target
+    const finalValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: finalValue
     }))
   }
 
@@ -91,11 +66,21 @@ function Cargos() {
 
     try {
       const token = localStorage.getItem('authToken')
-      const url = editingRole 
-        ? `http://localhost:4040/api/role/${editingRole.id}`
-        : 'http://localhost:4040/api/role'
+      const url = editingPosition 
+        ? `http://localhost:4040/api/positions/${editingPosition.id}`
+        : 'http://localhost:4040/api/positions'
       
-      const method = editingRole ? 'PUT' : 'POST'
+      const method = editingPosition ? 'PUT' : 'POST'
+      
+      const dataToSend = {
+        position_name: formData.position_name,
+        description: formData.description || null,
+        base_salary: parseFloat(formData.base_salary),
+        weekly_hours: parseInt(formData.weekly_hours),
+        level: formData.level || null,
+        department: formData.department || null,
+        active: formData.active
+      }
       
       const response = await fetch(url, {
         method: method,
@@ -103,99 +88,127 @@ function Cargos() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          ...formData,
-          permissions: selectedPermissions
-        })
+        body: JSON.stringify(dataToSend)
       })
 
       const data = await response.json()
 
       if (data.success) {
-        alert(editingRole ? 'Cargo atualizado com sucesso!' : 'Cargo cadastrado com sucesso!')
+        alert(editingPosition ? 'Cargo atualizado com sucesso!' : 'Cargo cadastrado com sucesso!')
         setShowForm(false)
         setFormData({
-          role_name: '',
-          description: ''
+          position_name: '',
+          description: '',
+          base_salary: '',
+          weekly_hours: '44',
+          level: '',
+          department: '',
+          active: true
         })
-        setSelectedPermissions([])
-        setEditingRole(null)
-        loadRoles()
+        setEditingPosition(null)
+        loadPositions()
       } else {
-        setError(data.message || `Erro ao ${editingRole ? 'atualizar' : 'cadastrar'} cargo`)
+        setError(data.message || `Erro ao ${editingPosition ? 'atualizar' : 'cadastrar'} cargo`)
       }
     } catch (err: any) {
+      console.error('Error submitting form:', err)
       setError(err.message || 'Erro na conexão com o servidor')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleEdit = (role: Role) => {
-    setEditingRole(role)
+  const handleEdit = (position: Position) => {
+    setEditingPosition(position)
     setFormData({
-      role_name: role.role_name,
-      description: role.description || ''
+      position_name: position.position_name,
+      description: position.description || '',
+      base_salary: position.base_salary.toString(),
+      weekly_hours: position.weekly_hours.toString(),
+      level: position.level || '',
+      department: position.department || '',
+      active: position.active
     })
-    setSelectedPermissions(role.permissions || [])
     setShowForm(true)
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Tem certeza que deseja inativar este cargo?')) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`http://localhost:4040/api/positions/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('Cargo inativado com sucesso!')
+        loadPositions()
+      } else {
+        alert(data.message || 'Erro ao inativar cargo')
+      }
+    } catch (err) {
+      console.error('Erro ao inativar cargo:', err)
+      alert('Erro na conexão com o servidor')
+    }
+  }
+
+  const handleReactivate = async (id: number) => {
+    if (!confirm('Tem certeza que deseja reativar este cargo?')) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`http://localhost:4040/api/positions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ active: true })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('Cargo reativado com sucesso!')
+        loadPositions()
+      } else {
+        alert(data.message || 'Erro ao reativar cargo')
+      }
+    } catch (err) {
+      console.error('Erro ao reativar cargo:', err)
+      alert('Erro na conexão com o servidor')
+    }
   }
 
   const handleCancelEdit = () => {
     setShowForm(false)
-    setEditingRole(null)
+    setEditingPosition(null)
     setFormData({
-      role_name: '',
-      description: ''
+      position_name: '',
+      description: '',
+      base_salary: '',
+      weekly_hours: '44',
+      level: '',
+      department: '',
+      active: true
     })
-    setSelectedPermissions([])
   }
 
-  const renderPermissionsByCategory = () => {
-    const grouped = groupPermissionsByCategory(permissions.map(p => p.permission_name))
-    
-    return Object.entries(grouped).map(([category, perms]) => (
-      <div key={category} style={{ marginBottom: '15px' }}>
-        <h4 style={{ 
-          marginBottom: '8px', 
-          color: '#2a626a',
-          fontSize: '14px',
-          fontWeight: 'bold'
-        }}>
-          {category}
-        </h4>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: '8px'
-        }}>
-          {perms.map(permName => (
-            <label
-              key={permName}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                padding: '5px',
-                borderRadius: '4px',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <input
-                type="checkbox"
-                checked={selectedPermissions.includes(permName)}
-                onChange={() => handlePermissionToggle(permName)}
-                style={{ cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '13px' }}>{translatePermission(permName)}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-    ))
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
   }
 
   return (
@@ -214,8 +227,8 @@ function Cargos() {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <h1 style={{ margin: 0 }}>Gerenciamento de Cargos</h1>
-          {hasPermission('roles:create') && (
+          <h1 style={{ margin: 0 }}>Cargos de Funcionários</h1>
+          {hasPermission('positions:create') && (
             <button 
               onClick={() => {
                 if (showForm) {
@@ -239,7 +252,7 @@ function Cargos() {
           )}
         </div>
 
-        {!hasPermission('roles:view') && !hasPermission('roles:read') ? (
+        {!hasPermission('positions:view') ? (
           <div style={{
             backgroundColor: '#fff3cd',
             color: '#856404',
@@ -252,201 +265,335 @@ function Cargos() {
         ) : (
           <>
             {error && (
-          <div style={{
-            backgroundColor: '#f44336',
-            color: 'white',
-            padding: '10px',
-            borderRadius: '4px',
-            marginBottom: '20px'
-          }}>
-            {error}
-          </div>
-        )}
-
-        {showForm && (
-          <div style={{
-            backgroundColor: '#f5f5f5',
-            padding: '20px',
-            borderRadius: '8px',
-            marginBottom: '20px'
-          }}>
-            <h2>{editingRole ? 'Editar Cargo' : 'Novo Cargo'}</h2>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Nome do Cargo *
-                </label>
-                <input
-                  type="text"
-                  name="role_name"
-                  value={formData.role_name}
-                  onChange={handleInputChange}
-                  required
-                  disabled={!!editingRole}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
-                    backgroundColor: editingRole ? '#f0f0f0' : 'white',
-                    cursor: editingRole ? 'not-allowed' : 'text'
-                  }}
-                />
-                {editingRole && (
-                  <small style={{ color: '#666', fontSize: '12px' }}>
-                    O nome do cargo não pode ser alterado
-                  </small>
-                )}
-              </div>
-
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Descrição
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={4}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
-                  Permissões
-                </label>
-                <div style={{
-                  maxHeight: '400px',
-                  overflowY: 'auto',
-                  padding: '15px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  backgroundColor: 'white'
-                }}>
-                  {renderPermissionsByCategory()}
-                </div>
-                <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
-                  {selectedPermissions.length} permissão(ões) selecionada(s)
-                </div>
-              </div>
-
-              <div style={{ marginTop: '20px' }}>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    padding: '10px 30px',
-                    backgroundColor: loading ? '#ccc' : '#2196F3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  {loading ? 'Salvando...' : 'Salvar'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        <div style={{
-          backgroundColor: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <h2>Lista de Cargos</h2>
-          {roles.length === 0 ? (
-            <p style={{ color: '#666', fontStyle: 'italic' }}>
-              Nenhum cargo cadastrado.
-            </p>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                marginTop: '10px'
+              <div style={{
+                backgroundColor: '#f44336',
+                color: 'white',
+                padding: '10px',
+                borderRadius: '4px',
+                marginBottom: '20px'
               }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>ID</th>
-                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Nome</th>
-                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Descrição</th>
-                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Permissões</th>
-                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {roles.map((role, index) => (
-                    <tr key={role.id} style={{
-                      backgroundColor: index % 2 === 0 ? 'white' : '#fafafa'
-                    }}>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{role.id}</td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
-                        {role.role_name}
-                      </td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>
-                        {role.description || '-'}
-                      </td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>
-                        {role.permissions && role.permissions.length > 0 ? (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                            {role.permissions.map((perm, idx) => (
-                              <span
-                                key={idx}
-                                style={{
-                                  fontSize: '11px',
-                                  padding: '3px 8px',
-                                  backgroundColor: '#e3f2fd',
-                                  color: '#1976d2',
-                                  borderRadius: '3px',
-                                  border: '1px solid #bbdefb'
-                                }}
-                                title={perm}
-                              >
-                                {translatePermission(perm)}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span style={{ color: '#999' }}>Sem permissões</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>
-                        {hasPermission('roles:update') && (
-                          <button
-                            onClick={() => handleEdit(role)}
-                            style={{
-                              padding: '6px 12px',
-                              backgroundColor: '#2196F3',
-                              color: 'white',
-                              border: 'none',
+                {error}
+              </div>
+            )}
+
+            {showForm && (
+              <div style={{
+                backgroundColor: '#f5f5f5',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h2>{editingPosition ? 'Editar Cargo' : 'Novo Cargo'}</h2>
+                <form onSubmit={handleSubmit}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Nome do Cargo *
+                      </label>
+                      <input
+                        type="text"
+                        name="position_name"
+                        value={formData.position_name}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Ex: Analista de Sistemas"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Salário Base *
+                      </label>
+                      <input
+                        type="number"
+                        name="base_salary"
+                        value={formData.base_salary}
+                        onChange={handleInputChange}
+                        required
+                        step="0.01"
+                        min="0"
+                        placeholder="Ex: 3500.00"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Carga Horária Semanal *
+                      </label>
+                      <input
+                        type="number"
+                        name="weekly_hours"
+                        value={formData.weekly_hours}
+                        onChange={handleInputChange}
+                        required
+                        min="1"
+                        max="44"
+                        placeholder="Ex: 44"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Nível
+                      </label>
+                      <select
+                        name="level"
+                        value={formData.level}
+                        onChange={handleInputChange}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      >
+                        <option value="">Selecione um nível</option>
+                        <option value="Estagiário">Estagiário</option>
+                        <option value="Júnior">Júnior</option>
+                        <option value="Pleno">Pleno</option>
+                        <option value="Sênior">Sênior</option>
+                        <option value="Especialista">Especialista</option>
+                        <option value="Coordenador">Coordenador</option>
+                        <option value="Gerente">Gerente</option>
+                        <option value="Diretor">Diretor</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Departamento
+                      </label>
+                      <input
+                        type="text"
+                        name="department"
+                        value={formData.department}
+                        onChange={handleInputChange}
+                        placeholder="Ex: Tecnologia da Informação"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Descrição
+                      </label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        rows={3}
+                        placeholder="Descrição detalhada do cargo e suas responsabilidades"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc',
+                          resize: 'vertical'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        cursor: 'pointer',
+                        padding: '10px',
+                        backgroundColor: '#f9f9f9',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd'
+                      }}>
+                        <input
+                          type="checkbox"
+                          name="active"
+                          checked={formData.active}
+                          onChange={handleInputChange}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            marginRight: '10px',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <span style={{ fontWeight: 'bold' }}>
+                          Cargo Ativo
+                        </span>
+                        <span style={{ 
+                          marginLeft: '10px', 
+                          fontSize: '12px', 
+                          color: formData.active ? '#4CAF50' : '#f44336',
+                          fontWeight: 'bold'
+                        }}>
+                          {formData.active ? '✓ Ativo' : '✗ Inativo'}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '20px' }}>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{
+                        padding: '10px 30px',
+                        backgroundColor: loading ? '#ccc' : '#2196F3',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      {loading ? 'Salvando...' : 'Salvar'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <h2>Lista de Cargos</h2>
+              {positions.length === 0 ? (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>
+                  Nenhum cargo cadastrado.
+                </p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    marginTop: '10px'
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#f5f5f5' }}>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Nome</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Departamento</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Nível</th>
+                        <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #ddd' }}>Salário Base</th>
+                        <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Carga Horária</th>
+                        <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Status</th>
+                        <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {positions.map(position => (
+                        <tr key={position.id} style={{ borderBottom: '1px solid #eee' }}>
+                          <td style={{ padding: '12px' }}>
+                            <strong>{position.position_name}</strong>
+                            {position.description && (
+                              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                                {position.description.length > 50 
+                                  ? position.description.substring(0, 50) + '...' 
+                                  : position.description}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: '12px' }}>{position.department || '-'}</td>
+                          <td style={{ padding: '12px' }}>{position.level || '-'}</td>
+                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold' }}>
+                            {formatCurrency(position.base_salary)}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            {position.weekly_hours}h/sem
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <span style={{
+                              padding: '4px 8px',
                               borderRadius: '4px',
-                              cursor: 'pointer',
                               fontSize: '12px',
-                              marginRight: '5px'
-                            }}
-                          >
-                            Editar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              fontWeight: 'bold',
+                              backgroundColor: position.active ? '#e8f5e9' : '#ffebee',
+                              color: position.active ? '#2e7d32' : '#c62828'
+                            }}>
+                              {position.active ? 'Ativo' : 'Inativo'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            {hasPermission('positions:update') && (
+                              <button
+                                onClick={() => handleEdit(position)}
+                                style={{
+                                  padding: '5px 10px',
+                                  marginRight: '5px',
+                                  backgroundColor: '#2196F3',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Editar
+                              </button>
+                            )}
+                            {hasPermission('positions:delete') && position.active && (
+                              <button
+                                onClick={() => handleDelete(position.id)}
+                                style={{
+                                  padding: '5px 10px',
+                                  backgroundColor: '#f44336',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Inativar
+                              </button>
+                            )}
+                            {hasPermission('positions:update') && !position.active && (
+                              <button
+                                onClick={() => handleReactivate(position.id)}
+                                style={{
+                                  padding: '5px 10px',
+                                  backgroundColor: '#4CAF50',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Reativar
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          )}
-        </div>
           </>
         )}
       </div>
@@ -454,4 +601,4 @@ function Cargos() {
   )
 }
 
-export default Cargos
+export default CargosFunc

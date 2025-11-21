@@ -15,7 +15,7 @@ export interface LoginResponse {
 export interface AuthUser {
   id: number
   usuario: string
-  cargo: string[]
+  profile: string[]
   permissoes: string[]
 }
 
@@ -45,15 +45,15 @@ export interface addUser {
   role: string
 }
 
-export interface Role {
+export interface Profile {
   id: number
-  role_name: string
+  profile_name: string
   description?: string
-  allowed_id?: number
+  permission_id?: number
 }
 
-export interface addRole {
-  role_name: string
+export interface addProfile {
+  profile_name: string
   description?: string
   permissions?: string[]
 }
@@ -79,10 +79,10 @@ export interface LogEntry {
 export interface IElectronAPI {
   submitLogin: (usuario: string, senha: string) => Promise<LoginResponse>
   addUser: (dadosUsuario: addUser) => Promise<AnyResponse>
-  addRole: (dadosCargo: addRole) => Promise<AnyResponse>
-  getAllRoles: () => Promise<Role[] | AnyResponse>
+  addProfile: (dadosCargo: addProfile) => Promise<AnyResponse>
+  getAllRoles: () => Promise<Profile[] | AnyResponse>
   searchUsers: (filters?: { field?: string; value?: string }) => Promise<User[] | AnyResponse>
-  searchRoles: (filters?: { field?: string; value?: string }) => Promise<Role[] | AnyResponse>
+  searchProfiles: (filters?: { field?: string; value?: string }) => Promise<Profile[] | AnyResponse>
   logAction: (entry: any) => Promise<AnyResponse>
   getLogs: (limit?: number) => Promise<AnyResponse>
   getAllowed: () => Promise<AllowedResponse>

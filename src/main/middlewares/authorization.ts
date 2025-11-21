@@ -20,7 +20,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
     req.user = {
       id: decoded.id,
       usuario: decoded.user,
-      cargo: decoded.role,
+      profile: decoded.role,
       permissoes: decoded.perm
     }
     next()
@@ -55,10 +55,10 @@ export function requireRoles(...roles: string[]) {
       return res.status(401).json({ success: false, message: 'Não autenticado' })
     }
 
-    const hasRole = roles.some(role => user.cargo.includes(role))
+    const hasRole = roles.some(role => user.profile.includes(role))
     
     if (!hasRole) {
-      return res.status(403).json({ success: false, message: 'Cargo insuficiente' })
+      return res.status(403).json({ success: false, message: 'Perfil insuficiente' })
     }
 
     next()

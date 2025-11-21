@@ -1,5 +1,5 @@
 import { Router, Response } from 'express'
-import funcionarioService from '../services/funcionarioService'
+import employeeService from '../services/employeeService'
 import logService from '../services/logService'
 import { AuthRequest } from '../types'
 
@@ -8,7 +8,7 @@ const router = Router()
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const status = req.query.status as string | undefined
-    const funcionarios = await funcionarioService.listarFuncionarios(status)
+    const funcionarios = await employeeService.listarFuncionarios(status)
     
     res.json({
       success: true,
@@ -26,7 +26,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id)
-    const funcionario = await funcionarioService.buscarFuncionarioPorId(id)
+    const funcionario = await employeeService.buscarFuncionarioPorId(id)
     
     if (!funcionario) {
       return res.status(404).json({
@@ -50,16 +50,16 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 
 router.post('/', async (req: AuthRequest, res: Response) => {
   try {
-    const { nome_completo, cpf, salario_atual, id_cargo, data_admissao } = req.body
+    const { full_name, cpf, current_salary, position_id, hire_date } = req.body
     
-    if (!nome_completo || !cpf || !salario_atual || !id_cargo || !data_admissao) {
+    if (!full_name || !cpf || !current_salary || !position_id || !hire_date) {
       return res.status(400).json({
         success: false,
-        message: 'Campos obrigatórios: nome_completo, cpf, salario_atual, id_cargo, data_admissao'
+        message: 'Campos obrigatórios: full_name, cpf, current_salary, position_id, hire_date'
       })
     }
     
-    const existente = await funcionarioService.buscarFuncionarioPorCPF(cpf)
+    const existente = await employeeService.buscarFuncionarioPorCPF(cpf)
     if (existente) {
       return res.status(400).json({
         success: false,
@@ -67,13 +67,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       })
     }
     
-    const id = await funcionarioService.criarFuncionario(req.body)
+    const id = await employeeService.criarFuncionario(req.body)
     
     await logService.write({
       user_id: req.user?.id,
       who: req.user?.usuario || 'Sistema',
       where: 'Funcionários',
-      what: `Cadastrou o funcionário: ${nome_completo}`
+      what: `Cadastrou o funcionário: ${full_name}`
     })
     
     res.status(201).json({
@@ -93,7 +93,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id)
-    const funcionario = await funcionarioService.buscarFuncionarioPorId(id)
+    const funcionario = await employeeService.buscarFuncionarioPorId(id)
     
     if (!funcionario) {
       return res.status(404).json({
@@ -102,14 +102,14 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
       })
     }
     
-    const sucesso = await funcionarioService.atualizarFuncionario(id, req.body)
+    const sucesso = await employeeService.atualizarFuncionario(id, req.body)
     
     if (sucesso) {
       await logService.write({
         user_id: req.user?.id,
         who: req.user?.usuario || 'Sistema',
         where: 'Funcionários',
-        what: `Atualizou o funcionário: ${funcionario.nome_completo}`
+        what: `Atualizou o funcionário: ${funcionario.full_name}`
       })
       
       res.json({
@@ -134,7 +134,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 router.get('/:id/calcular', async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id)
-    const calculo = await funcionarioService.calcularFolhaPagamento(id)
+    const calculo = await employeeService.calcularFolhaPagamento(id)
     
     res.json({
       success: true,
@@ -151,7 +151,7 @@ router.get('/:id/calcular', async (req: AuthRequest, res: Response) => {
 
 router.get('/stats/geral', async (req: AuthRequest, res: Response) => {
   try {
-    const stats = await funcionarioService.obterEstatisticas()
+    const stats = await employeeService.obterEstatisticas()
     
     res.json({
       success: true,
@@ -169,21 +169,21 @@ router.get('/stats/geral', async (req: AuthRequest, res: Response) => {
 router.get('/relatorio/consolidado', async (req: AuthRequest, res: Response) => {
   try {
     const status = req.query.status as string | undefined
-    const funcionarios = await funcionarioService.listarFuncionarios(status)
+    const funcionarios = await employeeService.listarFuncionarios(status)
     
     const relatorio = []
     
     for (const func of funcionarios) {
-      const calculo = await funcionarioService.calcularFolhaPagamento(func.id_funcionario)
+      const calculo = await employeeService.calcularFolhaPagamento(func.id)
       relatorio.push({
-        nome: func.nome_completo,
+        nome: func.full_name,
         cpf: func.cpf,
-        cargo: func.nome_cargo,
+        cargo: func.position_name,
         status: func.status,
         salario_bruto: calculo.salarioBruto,
         inss: calculo.inss,
         irrf: calculo.irrf,
-        vale_transporte: calculo.valeTransporteDesc,
+        transportation_voucher: calculo.valeTransporteDesc,
         total_descontos: calculo.totalDescontos,
         salario_liquido: calculo.salarioLiquido,
         encargos_patronais: calculo.totalEncargos,

@@ -16,7 +16,7 @@ interface User {
 
 interface Role {
   id: number
-  role_name: string
+  profile_name: string
 }
 
 function Usuarios() {
@@ -32,10 +32,12 @@ function Usuarios() {
     login: '',
     password: '',
     cpf: '',
-    role: ''
+    role: '',
+    status: 1
   })
 
   useEffect(() => {
+    console.log('Componente Usuarios montado')
     loadUsers()
     loadRoles()
   }, [])
@@ -60,7 +62,7 @@ function Usuarios() {
   const loadRoles = async () => {
     try {
       const token = localStorage.getItem('authToken')
-      const response = await fetch('http://localhost:4040/api/roles', {
+      const response = await fetch('http://localhost:4040/api/profiles', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -70,15 +72,16 @@ function Usuarios() {
         setRoles(data.data || [])
       }
     } catch (err) {
-      console.error('Erro ao carregar cargos:', err)
+      console.error('Erro ao carregar perfis:', err)
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
+    const { name, value, type } = e.target
+    const finalValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked ? 1 : 0 : value
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: finalValue
     }))
   }
 
@@ -91,6 +94,8 @@ function Usuarios() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Form submitted!')
+    console.log('Form data:', formData)
     setLoading(true)
     setError('')
 
@@ -107,18 +112,20 @@ function Usuarios() {
         email: formData.email,
         user: formData.login,
         cpf: formData.cpf,
-        role: formData.role
+        role: formData.role,
+        status: formData.status
       }
 
       if (!editingUser) {
         dataToSend.password = formData.password
         dataToSend.birth_date = '1990-01-01'
-        dataToSend.status = 1
       } else {
         if (formData.password) {
           dataToSend.password = formData.password
         }
       }
+      
+      console.log('Sending request:', { method, url, dataToSend })
       
       const response = await fetch(url, {
         method: method,
@@ -129,7 +136,9 @@ function Usuarios() {
         body: JSON.stringify(dataToSend)
       })
 
+      console.log('Response status:', response.status)
       const data = await response.json()
+      console.log('Response data:', data)
 
       if (data.success) {
         alert(editingUser ? 'Usuário atualizado com sucesso!' : 'Usuário cadastrado com sucesso!')
@@ -140,7 +149,8 @@ function Usuarios() {
           login: '',
           password: '',
           cpf: '',
-          role: ''
+          role: '',
+          status: 1
         })
         setEditingUser(null)
         loadUsers()
@@ -148,6 +158,7 @@ function Usuarios() {
         setError(data.message || `Erro ao ${editingUser ? 'atualizar' : 'cadastrar'} usuário`)
       }
     } catch (err: any) {
+      console.error('Error submitting form:', err)
       setError(err.message || 'Erro na conexão com o servidor')
     } finally {
       setLoading(false)
@@ -162,7 +173,8 @@ function Usuarios() {
       login: user.login,
       password: '', // Deixar vazio na edição
       cpf: user.cpf,
-      role: user.role
+      role: user.role,
+      status: user.status
     })
     setShowForm(true)
   }
@@ -176,7 +188,8 @@ function Usuarios() {
       login: '',
       password: '',
       cpf: '',
-      role: ''
+      role: '',
+      status: 1
     })
   }
 
@@ -205,9 +218,12 @@ function Usuarios() {
           {hasPermission('users:create') && (
             <button 
               onClick={() => {
+                console.log('Botão Novo Usuário clicado. showForm atual:', showForm)
                 if (showForm) {
+                  console.log('Cancelando formulário')
                   handleCancelEdit()
                 } else {
+                  console.log('Mostrando formulário')
                   setShowForm(true)
                 }
               }}
@@ -258,7 +274,10 @@ function Usuarios() {
             marginBottom: '20px'
           }}>
             <h2>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h2>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={(e) => {
+              console.log('Form onSubmit disparado')
+              handleSubmit(e)
+            }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
@@ -366,7 +385,7 @@ function Usuarios() {
 
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Cargo *
+                    Perfil de Acesso *
                   </label>
                   <select
                     name="role"
@@ -380,13 +399,49 @@ function Usuarios() {
                       border: '1px solid #ccc'
                     }}
                   >
-                    <option value="">Selecione um cargo</option>
+                    <option value="">Selecione um perfil</option>
                     {roles.map(role => (
-                      <option key={role.id} value={role.role_name}>
-                        {role.role_name}
+                      <option key={role.id} value={role.profile_name}>
+                        {role.profile_name}
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    cursor: 'pointer',
+                    padding: '10px',
+                    backgroundColor: '#f9f9f9',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd'
+                  }}>
+                    <input
+                      type="checkbox"
+                      name="status"
+                      checked={formData.status === 1}
+                      onChange={handleInputChange}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        marginRight: '10px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <span style={{ fontWeight: 'bold' }}>
+                      Usuário Ativo
+                    </span>
+                    <span style={{ 
+                      marginLeft: '10px', 
+                      fontSize: '12px', 
+                      color: formData.status === 1 ? '#4CAF50' : '#f44336',
+                      fontWeight: 'bold'
+                    }}>
+                      {formData.status === 1 ? '✓ Ativo' : '✗ Inativo'}
+                    </span>
+                  </label>
                 </div>
               </div>
 
@@ -394,6 +449,7 @@ function Usuarios() {
                 <button
                   type="submit"
                   disabled={loading}
+                  onClick={() => console.log('Botão Salvar clicado. Loading:', loading)}
                   style={{
                     padding: '10px 30px',
                     backgroundColor: loading ? '#ccc' : '#2196F3',
@@ -436,7 +492,7 @@ function Usuarios() {
                     <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Email</th>
                     <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Login</th>
                     <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>CPF</th>
-                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Cargo</th>
+                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Perfil</th>
                     <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Status</th>
                     <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Ações</th>
                   </tr>
@@ -468,7 +524,7 @@ function Usuarios() {
                           fontSize: '12px',
                           fontWeight: 'bold'
                         }}>
-                          {user.role || 'Sem cargo'}
+                          {user.role || 'Sem perfil'}
                         </span>
                       </td>
                       <td style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>

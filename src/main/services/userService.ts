@@ -20,12 +20,12 @@ class UserService {
           creation_date: new Date()
         })
 
-        const role = await trx('roles').where({ role_name: userData.role }).first()
+        const role = await trx('profiles').where({ profile_name: userData.role }).first()
         if (!role) throw new Error(`Cargo '${userData.role}' não encontrado`)
 
-        await trx('role_users').insert({
+        await trx('profile_users').insert({
           users_id: newUserID,
-          roles_id: role.id
+          profile_id: role.id
         })
 
         await logService.write({
@@ -52,8 +52,8 @@ class UserService {
   }) {
     try {
       const query = db('users as u')
-        .leftJoin('role_users as ru', 'ru.users_id', 'u.id')
-        .leftJoin('roles as r', 'r.id', 'ru.roles_id')
+        .leftJoin('profile_users as pu', 'pu.users_id', 'u.id')
+        .leftJoin('profiles as p', 'p.id', 'pu.profile_id')
         .select(
           'u.id',
           'u.full_name',
@@ -62,7 +62,7 @@ class UserService {
           'u.cpf',
           'u.birth_date',
           'u.status',
-          db.raw('COALESCE(r.role_name, "") as role')
+          db.raw('COALESCE(p.profile_name, "") as role')
         )
 
       if (options.id) query.where('u.id', options.id)
@@ -70,7 +70,7 @@ class UserService {
       else if (options.email) query.where('u.email', 'like', `%${options.email}%`)
       else if (options.login) query.where('u.login', 'like', `%${options.login}%`)
       else if (options.cpf) query.where('u.cpf', 'like', `${options.cpf.replace(/\D+/g, '')}%`)
-      else if (options.role) query.where('r.role_name', 'like', `%${options.role}%`)
+      else if (options.role) query.where('p.profile_name', 'like', `%${options.role}%`)
       else return null
 
       return await query.first()
@@ -82,8 +82,8 @@ class UserService {
   async listAllUsers() {
     try {
       const users = await db('users as u')
-        .leftJoin('role_users as ru', 'ru.users_id', 'u.id')
-        .leftJoin('roles as r', 'r.id', 'ru.roles_id')
+        .leftJoin('profile_users as pu', 'pu.users_id', 'u.id')
+        .leftJoin('profiles as p', 'p.id', 'pu.profile_id')
         .select(
           'u.id',
           'u.full_name',
@@ -93,7 +93,7 @@ class UserService {
           'u.birth_date',
           'u.status',
           'u.creation_date',
-          db.raw('COALESCE(r.role_name, "") as role')
+          db.raw('COALESCE(p.profile_name, "") as role')
         )
         .orderBy('u.full_name', 'asc')
 
@@ -129,14 +129,14 @@ class UserService {
         }
 
         if (userData.role) {
-          const role = await trx('roles').where({ role_name: userData.role }).first()
+          const role = await trx('profiles').where({ profile_name: userData.role }).first()
           if (!role) throw new Error(`Cargo '${userData.role}' não encontrado`)
 
-          await trx('role_users').where({ users_id: userId }).delete()
+          await trx('profile_users').where({ users_id: userId }).delete()
 
-          await trx('role_users').insert({
+          await trx('profile_users').insert({
             users_id: userId,
-            roles_id: role.id
+            profile_id: role.id
           })
         }
 

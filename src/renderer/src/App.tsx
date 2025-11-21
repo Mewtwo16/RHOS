@@ -5,7 +5,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import Usuarios from './pages/Usuarios'
-import Cargos from './pages/Cargos'
+import Perfis from './pages/Perfils'
+import CargosFunc from './pages/Cargos'
 import Logs from './pages/Logs'
 import Funcionarios from './pages/Funcionarios'
 import './assets/css/global.css'
@@ -36,7 +37,8 @@ function App(): React.JSX.Element {
         >
           <Route path="home" element={<Home />} />
           <Route path="usuarios" element={<Usuarios />} />
-          <Route path="cargos" element={<Cargos />} />
+          <Route path="perfis" element={<Perfis />} />
+          <Route path="cargos-funcionarios" element={<CargosFunc />} />
           <Route path="funcionarios" element={<Funcionarios />} />
           <Route path="logs" element={<Logs />} />
         </Route>

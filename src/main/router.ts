@@ -3,18 +3,18 @@ const route = express.Router()
 
 import { loginSchema, loginIsValid } from './middlewares/loginValidate'
 import { addUserSchema, userIsValid } from './middlewares/addUserValidate'
-import { addRoleSchema, roleIsValid } from './middlewares/addRoleValidate'
+import { addProfileSchema, profileIsValid } from './middlewares/addProfileValidate'
 
 import { authenticateToken, requirePermissions } from './middlewares/authorization'
 
 import { loginRoute } from './routes/authRoute'
 import { addUserRoute, getUserRoute, listUsersRoute, updateUserRoute } from './routes/userRoute'
 import { healthRoute } from './routes/healthRoute'
-import { addRoleRoute, getRoleRoute, listRolesRoute, updateRoleRoute } from './routes/roleRoute'
+import { addProfileRoute, getProfileRoute, listProfilesRoute, updateProfileRoute } from './routes/profileRoute'
 import { getAllowedRoute } from './routes/allowedRoute'
 import { getLogsRoute } from './routes/logRoute'
-import cargoRoute from './routes/cargoRoute'
-import funcionarioRoute from './routes/funcionarioRoute'
+import positionRoute from './routes/positionRoute'
+import employeeRoute from './routes/employeeRoute'
 
 route.get('/api/health', healthRoute)
 
@@ -28,19 +28,19 @@ route.get('/api/user', authenticateToken, requirePermissions('users:view'), getU
 
 route.get('/api/users', authenticateToken, requirePermissions('users:view'), listUsersRoute)
 
-route.post('/api/role', authenticateToken, requirePermissions('roles:create'), roleIsValid(addRoleSchema),addRoleRoute)
+route.post('/api/profile', authenticateToken, requirePermissions('profiles:create'), profileIsValid(addProfileSchema), addProfileRoute)
 
-route.put('/api/role/:id', authenticateToken, requirePermissions('roles:update'), updateRoleRoute)
+route.put('/api/profile/:id', authenticateToken, requirePermissions('profiles:update'), updateProfileRoute)
 
-route.get('/api/role', authenticateToken, requirePermissions('roles:view'), getRoleRoute)
+route.get('/api/profile', authenticateToken, requirePermissions('profiles:view'), getProfileRoute)
 
-route.get('/api/roles', authenticateToken, requirePermissions('roles:view'), listRolesRoute)
+route.get('/api/profiles', authenticateToken, requirePermissions('profiles:view'), listProfilesRoute)
 
 route.get('/api/allowed', authenticateToken, requirePermissions('permissions:view'), getAllowedRoute)
 route.get('/api/logs', authenticateToken, requirePermissions('logs:view'), getLogsRoute)
 
-route.use('/api/cargos', authenticateToken, requirePermissions('cargos:view'), cargoRoute)
+route.use('/api/positions', authenticateToken, requirePermissions('positions:view'), positionRoute)
 
-route.use('/api/funcionarios', authenticateToken, requirePermissions('funcionarios:view'), funcionarioRoute)
+route.use('/api/employees', authenticateToken, requirePermissions('employees:view'), employeeRoute)
 
 export default route

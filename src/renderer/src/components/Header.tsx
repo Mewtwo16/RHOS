@@ -89,6 +89,11 @@ function Header() {
                   Funcionários
                 </Link>
               </li>
+              <li>
+                <Link to="/cargos-funcionarios" role="button">
+                  Cargos
+                </Link>
+              </li>
               <li><a href="#" role="button">Gestão de férias</a></li>
               <li><a href="#" role="button">Relógio de ponto</a></li>
               <li><a href="#" role="button">Gerenciamento de custos</a></li>
@@ -164,8 +169,8 @@ function Header() {
                 </Link>
               </li>
               <li>
-                <Link to="/cargos" role="button">
-                  Cadastro de Cargos
+                <Link to="/perfis" role="button">
+                  Perfis de Acesso
                 </Link>
               </li>
               <li><a href="#" role="button">Documentação</a></li>
